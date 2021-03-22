@@ -2,6 +2,12 @@
 
 A modern toolbox for synthetic biology
 
+## Code Checks
+
+```
+cargo test && cargo fmt && cargo clippy -Z unstable-options
+```
+
 ## Goals
 
 - Automated primer design

@@ -38,8 +38,7 @@ pub fn read_sequence<T: TryFrom<char>>(seq: impl AsRef<str>) -> Result<Vec<T>, T
 pub fn count_components<T: Hash + Eq>(seq: &[T]) -> HashMap<&T, usize> {
     let mut map = HashMap::new();
     for i in seq {
-        let count = map.entry(i).or_insert(0);
-        *count += 1;
+        *map.entry(i).or_default() += 1;
     }
     map
 }
