@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     convert::{TryFrom, TryInto},
+    fmt::Display,
     hash::Hash,
 };
 
@@ -27,6 +28,33 @@ impl TryFrom<char> for Dna {
             )),
         }
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Rna {
+    A,
+    C,
+    G,
+    U,
+}
+
+impl From<Dna> for Rna {
+    fn from(dna: Dna) -> Self {
+        match dna {
+            Dna::A => Rna::A,
+            Dna::C => Rna::C,
+            Dna::G => Rna::G,
+            Dna::T => Rna::U,
+        }
+    }
+}
+
+impl<T: Display> Display for Vec<T> {}
+
+// FIXME: This is a nasty API? I might need to abstract over "sequences". Ideally this would
+// collect into the same type it was originally passed?
+pub fn map_into<T, U: From<T>>(seq: impl IntoIterator<Item = T>) -> Vec<U> {
+    seq.into_iter().map(|x| x.into()).collect()
 }
 
 // FIXME: This feels like it belongs in a trait! Could also be more generic!
@@ -125,6 +153,53 @@ mod tests {
         assert_eq!(counts.get(&Dna::C), Some(&12));
         assert_eq!(counts.get(&Dna::G), Some(&17));
         assert_eq!(counts.get(&Dna::T), Some(&21));
+        Ok(())
+    }
+
+    #[test]
+    fn dna_to_rna() {
+        let rna: Rna = Dna::A.into();
+        assert_eq!(rna, Rna::A);
+        let rna: Rna = Dna::C.into();
+        assert_eq!(rna, Rna::C);
+        let rna: Rna = Dna::G.into();
+        assert_eq!(rna, Rna::G);
+        let rna: Rna = Dna::T.into();
+        assert_eq!(rna, Rna::U);
+    }
+
+    #[test]
+    fn dna_sequence_to_rna_sequence() -> Result<(), String> {
+        let dna: Vec<Dna> = read_sequence("GATGGAACTTGACTACGTAAATT")?;
+        let rna: Vec<Rna> = map_into(dna);
+        assert_eq!(
+            rna,
+            vec![
+                Rna::G,
+                Rna::A,
+                Rna::U,
+                Rna::G,
+                Rna::G,
+                Rna::A,
+                Rna::A,
+                Rna::C,
+                Rna::U,
+                Rna::U,
+                Rna::G,
+                Rna::A,
+                Rna::C,
+                Rna::U,
+                Rna::A,
+                Rna::C,
+                Rna::G,
+                Rna::U,
+                Rna::A,
+                Rna::A,
+                Rna::A,
+                Rna::U,
+                Rna::U
+            ]
+        );
         Ok(())
     }
 }
