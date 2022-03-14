@@ -1,5 +1,10 @@
-[package]
-name = "syn-zeug"
-version = "0.1.0"
-authors = ["Brooks J Rady <b.j.rady@gmail.com>"]
-edition = "2021"
+[workspace]
+members = [
+  "syn-zeug",
+  "biobox",
+]
+
+[profile.release]
+lto = true
+strip = true
+

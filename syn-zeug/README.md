@@ -4,8 +4,11 @@ A modern toolbox for synthetic biology
 
 ## Code Checks
 
-```
-cargo test && cargo fmt && cargo clippy -Z unstable-options
+``` bash
+# Basic checks
+cargo test && cargo fmt && cargo clippy
+# Test coverage
+cargo tarpaulin --lib
 ```
 
 ## Goals
