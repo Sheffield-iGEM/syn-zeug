@@ -14,7 +14,13 @@ bio = "0.40"
 
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"] }
+pprof = { version = "0.7", features = ["criterion", "flamegraph"] }
+iai = "0.1"
 
 [[bench]]
-name = "tool"
+name = "criterion"
+harness = false
+
+[[bench]]
+name = "iai"
 harness = false

@@ -48,15 +48,14 @@ impl Seq {
         self.bytes.is_empty()
     }
 
-    pub fn count_elements(&self) -> HashMap<u8, usize> {
-        let mut map = HashMap::new();
-        for &i in &self.bytes {
-            *map.entry(i).or_default() += 1;
+    pub fn count_elements(&self) -> [usize; 128] {
+        let mut counts = [0; 128];
+        for &b in &self.bytes {
+            counts[b as usize] += 1;
         }
-        map
+        counts
     }
 
-    // FIXME: Maybe I should (also?) have a non-mutable version of this
     pub fn convert(&self, kind: SeqKind) -> Self {
         match (self.kind, kind) {
             (SeqKind::Dna, SeqKind::Rna) => Self {
@@ -65,17 +64,6 @@ impl Seq {
                     .iter()
                     .map(|&b| if b == b'T' || b == b't' { b + 1 } else { b })
                     .collect(),
-                /*
-                bytes: self
-                    .bytes
-                    .iter()
-                    .map(|&b| match b {
-                        b'T' => b'U',
-                        b't' => b'u',
-                        _ => b,
-                    })
-                    .collect(),
-                */
                 kind: SeqKind::Rna,
             },
             _ => todo!(),
@@ -84,7 +72,6 @@ impl Seq {
 }
 
 #[cfg(test)]
-// FIXME: These could probably be a bit less repetitive...
 mod tests {
     use super::*;
 
@@ -124,10 +111,10 @@ mod tests {
         let dna =
             Seq::dna("AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC")?;
         let counts = dna.count_elements();
-        assert_eq!(counts.get(&b'A'), Some(&20));
-        assert_eq!(counts.get(&b'C'), Some(&12));
-        assert_eq!(counts.get(&b'G'), Some(&17));
-        assert_eq!(counts.get(&b'T'), Some(&21));
+        assert_eq!(counts[b'A' as usize], 20);
+        assert_eq!(counts[b'C' as usize], 12);
+        assert_eq!(counts[b'G' as usize], 17);
+        assert_eq!(counts[b'T' as usize], 21);
         Ok(())
     }
 

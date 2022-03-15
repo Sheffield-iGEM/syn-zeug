@@ -6,5 +6,7 @@ members = [
 
 [profile.release]
 lto = true
-strip = true
+#strip = true
 
+[profile.bench]
+debug = true
