@@ -56,6 +56,22 @@ impl Seq {
         counts
     }
 
+    pub fn count_bases(&self) -> [usize; 4] {
+        let (mut a, mut c, mut g, mut t) = (0, 0, 0, 0);
+        for &base in &self.bytes {
+            if base == b'A' {
+                a += 1;
+            } else if base == b'C' {
+                c += 1;
+            } else if base == b'G' {
+                g += 1;
+            } else if base == b'T' {
+                t += 1;
+            }
+        }
+        [a, c, g, t]
+    }
+
     pub fn convert(&self, kind: SeqKind) -> Self {
         match (self.kind, kind) {
             (SeqKind::Dna, SeqKind::Rna) => Self {
@@ -70,6 +86,23 @@ impl Seq {
         }
     }
 }
+
+pub struct SparseArray<T, const N: usize> {
+    inner: [T; N],
+    offset: usize,
+}
+
+impl<T: Copy, const N: usize> SparseArray<T, N> {
+    // FIXME: Silly. This needs to eventually use Default
+    pub fn new(value: T, offset: usize) -> Self {
+        Self {
+            inner: [value; N],
+            offset,
+        }
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests {

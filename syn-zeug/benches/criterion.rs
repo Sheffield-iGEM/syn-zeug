@@ -11,9 +11,18 @@ pub fn count_bases(c: &mut Criterion) {
             .as_bytes(),
     )
     .unwrap();
-    c.bench_function("count_elements 1kb", |b| {
-        b.iter(|| dna.count_elements())
-    });
+    c.bench_function("count_elements 1kb", |b| b.iter(|| dna.count_elements()));
+}
+
+pub fn count_bases_simple(c: &mut Criterion) {
+    let dna = Seq::dna(
+        fs::read_to_string("benches/data/rosalind_dna.txt")
+            .unwrap()
+            .trim()
+            .as_bytes(),
+    )
+    .unwrap();
+    c.bench_function("count_elements_simple 1kb", |b| b.iter(|| dna.count_bases()));
 }
 
 pub fn dna_to_rna(c: &mut Criterion) {
@@ -24,14 +33,12 @@ pub fn dna_to_rna(c: &mut Criterion) {
             .as_bytes(),
     )
     .unwrap();
-    c.bench_function("dna_to_rna 1kb", |b| {
-        b.iter(|| dna.convert(SeqKind::Rna))
-    });
+    c.bench_function("dna_to_rna 1kb", |b| b.iter(|| dna.convert(SeqKind::Rna)));
 }
 
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = count_bases, dna_to_rna
+    targets = count_bases, count_bases_simple, dna_to_rna
 );
 criterion_main!(benches);

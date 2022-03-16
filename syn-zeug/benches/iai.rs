@@ -13,6 +13,17 @@ pub fn count_bases() {
     dna.count_elements();
 }
 
+pub fn count_bases_simple() {
+    let dna = Seq::dna(
+        fs::read_to_string("benches/data/rosalind_dna.txt")
+            .unwrap()
+            .trim()
+            .as_bytes(),
+    )
+    .unwrap();
+    dna.count_bases();
+}
+
 pub fn dna_to_rna() {
     let dna = Seq::dna(
         fs::read_to_string("benches/data/rosalind_rna.txt")
@@ -24,4 +35,4 @@ pub fn dna_to_rna() {
     dna.convert(SeqKind::Rna);
 }
 
-iai::main!(count_bases, dna_to_rna);
+iai::main!(count_bases, count_bases_simple, dna_to_rna);
