@@ -1,5 +1,8 @@
 use bio::alphabets::{self, Alphabet};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    ops::{Index, IndexMut},
+};
 // Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
@@ -10,6 +13,16 @@ static ALPHABETS: Lazy<HashMap<SeqKind, Alphabet>> = Lazy::new(|| {
     m.insert(SeqKind::Protein, alphabets::protein::iupac_alphabet());
     m
 });
+
+// FIXME: Create a set of Enums for describing nucleotides like:
+// enum Nucleotide {
+//      A,
+//      C,
+//      G,
+//      T,
+// }
+// Then impl From<Nucleotide> for u8 and allow users to specify a nucleotide
+// enum that's automatically converted into a byte!
 
 // FIXME: Would references / slices be better here?
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -48,28 +61,12 @@ impl Seq {
         self.bytes.is_empty()
     }
 
-    pub fn count_elements(&self) -> [usize; 128] {
-        let mut counts = [0; 128];
+    pub fn count_elements(&self) -> ByteMap<usize> {
+        let mut counts = ByteMap::default();
         for &b in &self.bytes {
-            counts[b as usize] += 1;
+            counts[b] += 1;
         }
         counts
-    }
-
-    pub fn count_bases(&self) -> [usize; 4] {
-        let (mut a, mut c, mut g, mut t) = (0, 0, 0, 0);
-        for &base in &self.bytes {
-            if base == b'A' {
-                a += 1;
-            } else if base == b'C' {
-                c += 1;
-            } else if base == b'G' {
-                g += 1;
-            } else if base == b'T' {
-                t += 1;
-            }
-        }
-        [a, c, g, t]
     }
 
     pub fn convert(&self, kind: SeqKind) -> Self {
@@ -87,22 +84,35 @@ impl Seq {
     }
 }
 
-pub struct SparseArray<T, const N: usize> {
-    inner: [T; N],
-    offset: usize,
-}
+// FIXME: Split things into a couple of modules
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct ByteMap<T>([T; 128]);
 
-impl<T: Copy, const N: usize> SparseArray<T, N> {
-    // FIXME: Silly. This needs to eventually use Default
-    pub fn new(value: T, offset: usize) -> Self {
-        Self {
-            inner: [value; N],
-            offset,
-        }
+impl<T: Copy> ByteMap<T> {
+    pub const fn new(default: T) -> Self {
+        Self([default; 128])
     }
 }
 
+impl<T: Copy + Default> Default for ByteMap<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
 
+impl<T> Index<u8> for ByteMap<T> {
+    type Output = T;
+
+    fn index(&self, index: u8) -> &Self::Output {
+        &self.0[index as usize]
+    }
+}
+
+impl<T> IndexMut<u8> for ByteMap<T> {
+    fn index_mut(&mut self, index: u8) -> &mut Self::Output {
+        &mut self.0[index as usize]
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -112,6 +122,7 @@ mod tests {
     fn read_valid_dna_sequence() {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA");
         assert!(dna.is_ok());
+        assert_eq!(dna.unwrap().kind, SeqKind::Dna);
     }
 
     #[test]
@@ -144,24 +155,28 @@ mod tests {
         let dna =
             Seq::dna("AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC")?;
         let counts = dna.count_elements();
-        assert_eq!(counts[b'A' as usize], 20);
-        assert_eq!(counts[b'C' as usize], 12);
-        assert_eq!(counts[b'G' as usize], 17);
-        assert_eq!(counts[b'T' as usize], 21);
+        assert_eq!(counts[b'A'], 20);
+        assert_eq!(counts[b'C'], 12);
+        assert_eq!(counts[b'G'], 17);
+        assert_eq!(counts[b'T'], 21);
         Ok(())
     }
 
     #[test]
     fn dna_to_rna() -> Result<(), String> {
         let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
-        assert_eq!(dna.convert(SeqKind::Rna).bytes, b"GAUGGAACUUGACUACGUAAAUU");
+        let rna = dna.convert(SeqKind::Rna);
+        assert_eq!(rna.bytes, b"GAUGGAACUUGACUACGUAAAUU");
+        assert_eq!(rna.kind, SeqKind::Rna);
         Ok(())
     }
 
     #[test]
     fn dna_to_rna_keep_case() -> Result<(), String> {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
-        assert_eq!(dna.convert(SeqKind::Rna).bytes, b"GaUgGaAcUuGaCuAcGuAaAuU");
+        let rna = dna.convert(SeqKind::Rna);
+        assert_eq!(rna.bytes, b"GaUgGaAcUuGaCuAcGuAaAuU");
+        assert_eq!(rna.kind, SeqKind::Rna);
         Ok(())
     }
 }
