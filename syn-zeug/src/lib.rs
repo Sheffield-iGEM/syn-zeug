@@ -109,7 +109,7 @@ impl Seq {
 pub struct ByteMap<T>([T; 128]);
 
 impl<T: Copy> ByteMap<T> {
-    pub const fn new(default: T) -> Self {
+    pub fn new(default: T) -> Self {
         Self([default; 128])
     }
 }
