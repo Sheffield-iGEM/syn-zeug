@@ -9,6 +9,10 @@ A modern toolbox for synthetic biology
 cargo test && cargo fmt && cargo clippy
 # Test coverage
 cargo tarpaulin --lib
+# Benchmarking
+cargo bench
+# Profiling
+cargo bench --bench criterion -- --profile-time 10
 ```
 
 ## Goals
@@ -19,7 +23,7 @@ cargo tarpaulin --lib
 
 ## Tasks
 
-- Create benchmark tests with larger datasets
-- Work through the relevant Rosalind problems
-- Set up a Svelte front-end and compile to WebAssembly
-- Split up things into sensible modules
+- [ ] Split up things into sensible modules
+- [ ] Add code for computing GC-content (IUPAC compatible)
+- [ ] Add an `rna()` constructor + tests + conversion / complementing code
+- [ ] Fill in `todo!()`s

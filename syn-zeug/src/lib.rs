@@ -1,22 +1,25 @@
-use bio::alphabets::{self, Alphabet};
+use bio::alphabets::{dna, protein, rna, Alphabet};
 use std::{
     collections::HashMap,
+    fmt,
     ops::{Index, IndexMut},
+    str::from_utf8,
 };
 // Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
 static ALPHABETS: Lazy<HashMap<SeqKind, Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(SeqKind::Dna, alphabets::dna::iupac_alphabet());
-    m.insert(SeqKind::Rna, alphabets::rna::iupac_alphabet());
-    m.insert(SeqKind::Protein, alphabets::protein::iupac_alphabet());
+    m.insert(SeqKind::Dna, dna::iupac_alphabet());
+    m.insert(SeqKind::Rna, rna::iupac_alphabet());
+    m.insert(SeqKind::Protein, protein::iupac_alphabet());
     m
 });
 
-// FIXME: Create a set of Enums for describing nucleotides like:
-// enum Nucleotide {
-//      A,
+// TODO: Create a set of Enums for describing nucleotides like:
+// #[repr(u8)]
+// enum Dna {
+//      A = ...,
 //      C,
 //      G,
 //      T,
@@ -24,7 +27,7 @@ static ALPHABETS: Lazy<HashMap<SeqKind, Alphabet>> = Lazy::new(|| {
 // Then impl From<Nucleotide> for u8 and allow users to specify a nucleotide
 // enum that's automatically converted into a byte!
 
-// FIXME: Would references / slices be better here?
+// TODO: Would references / slices be better here?
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Seq {
     bytes: Vec<u8>,
@@ -38,11 +41,18 @@ pub enum SeqKind {
     Protein,
 }
 
+impl fmt::Display for Seq {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: Would it be faster to use `from_utf8_unchecked()`? Do I care?
+        f.write_str(from_utf8(&self.bytes).expect("Seq did not contain valid UTF-8"))
+    }
+}
+
 impl Seq {
-    // FIXME: I should probably create a custom error type instead us using a string!
+    // TODO: I should probably create a custom error type instead us using a string!
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
         let seq = seq.as_ref();
-        // FIXME: `.is_word()` could be improved to return the first non-word byte
+        // TODO: `.is_word()` could be improved to return the first non-word byte
         if ALPHABETS[&SeqKind::Dna].is_word(seq) {
             Ok(Self {
                 bytes: seq.to_vec(),
@@ -69,22 +79,32 @@ impl Seq {
         counts
     }
 
-    pub fn convert(&self, kind: SeqKind) -> Self {
+    pub fn reverse_complement(&self) -> Result<Self, String> {
+        match self.kind {
+            SeqKind::Dna => Ok(Self {
+                bytes: dna::revcomp(&self.bytes),
+                ..*self
+            }),
+            _ => todo!(),
+        }
+    }
+
+    pub fn convert(&self, kind: SeqKind) -> Result<Self, String> {
         match (self.kind, kind) {
-            (SeqKind::Dna, SeqKind::Rna) => Self {
+            (SeqKind::Dna, SeqKind::Rna) => Ok(Self {
                 bytes: self
                     .bytes
                     .iter()
                     .map(|&b| if b == b'T' || b == b't' { b + 1 } else { b })
                     .collect(),
                 kind: SeqKind::Rna,
-            },
+            }),
             _ => todo!(),
         }
     }
 }
 
-// FIXME: Split things into a couple of modules
+// TODO: Split things into a couple of modules
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ByteMap<T>([T; 128]);
 
@@ -135,6 +155,13 @@ mod tests {
     }
 
     #[test]
+    fn dna_to_string() -> Result<(), String> {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
+        assert_eq!(dna.to_string(), String::from("AGCTTTTCATTCTGACTGCA"));
+        Ok(())
+    }
+
+    #[test]
     fn get_sequence_length() -> Result<(), String> {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
         assert_eq!(dna.len(), 20);
@@ -165,7 +192,7 @@ mod tests {
     #[test]
     fn dna_to_rna() -> Result<(), String> {
         let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
-        let rna = dna.convert(SeqKind::Rna);
+        let rna = dna.convert(SeqKind::Rna)?;
         assert_eq!(rna.bytes, b"GAUGGAACUUGACUACGUAAAUU");
         assert_eq!(rna.kind, SeqKind::Rna);
         Ok(())
@@ -174,9 +201,25 @@ mod tests {
     #[test]
     fn dna_to_rna_keep_case() -> Result<(), String> {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
-        let rna = dna.convert(SeqKind::Rna);
+        let rna = dna.convert(SeqKind::Rna)?;
+        // TODO: Write Seq::rna() and make this one assert that looks like:
+        // assert_eq!(rna, Seq::rna("..."));
         assert_eq!(rna.bytes, b"GaUgGaAcUuGaCuAcGuAaAuU");
         assert_eq!(rna.kind, SeqKind::Rna);
+        Ok(())
+    }
+
+    #[test]
+    fn reverse_complement_dna() -> Result<(), String> {
+        let dna = Seq::dna("AAAACCCGGT")?;
+        assert_eq!(dna.reverse_complement()?.bytes, b"ACCGGGTTTT");
+        Ok(())
+    }
+
+    #[test]
+    fn reverse_complement_dna_keep_case() -> Result<(), String> {
+        let dna = Seq::dna("aaaacCCGGT")?;
+        assert_eq!(dna.reverse_complement()?.bytes, b"ACCGGgtttt");
         Ok(())
     }
 }

@@ -21,7 +21,18 @@ pub fn dna_to_rna() {
             .as_bytes(),
     )
     .unwrap();
-    dna.convert(SeqKind::Rna);
+    dna.convert(SeqKind::Rna).unwrap();
 }
 
-iai::main!(count_bases, dna_to_rna);
+pub fn reverse_complement_dna() {
+    let dna = Seq::dna(
+        fs::read_to_string("benches/data/rosalind_revc.txt")
+            .unwrap()
+            .trim()
+            .as_bytes(),
+    )
+    .unwrap();
+    dna.reverse_complement().unwrap();
+}
+
+iai::main!(count_bases, dna_to_rna, reverse_complement_dna);
