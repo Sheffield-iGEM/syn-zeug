@@ -23,6 +23,20 @@ cargo bench --bench criterion -- --profile-time 10
 
 ## Tasks
 
+### Basic
+- [ ] Base Counting
+- [ ] GC Content
+- [ ] Transcription
+- [ ] Reverse Transcription
+- [ ] Translation
+- [ ] Reverse Sequence
+- [ ] Sequence Length
+- [ ] Complement
+- [ ] Hamming Distance
+- [ ] General primer annealing temperature calculator 
+
+### Miscellaneous
+
 - [ ] Split up things into sensible modules
 - [ ] Add code for computing GC-content (IUPAC compatible)
 - [ ] Add an `rna()` constructor + tests + conversion / complementing code
