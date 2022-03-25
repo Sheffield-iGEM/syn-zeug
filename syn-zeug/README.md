@@ -15,29 +15,11 @@ cargo bench
 cargo bench --bench criterion -- --profile-time 10
 ```
 
-## Goals
-
-- Automated primer design
-- Automated codon optimization
-- Assisted bio-brick assembly / catalog exploration
-
-## Tasks
-
+## Currently Implemented Tools
 ### Basic
-- [ ] Base Counting
-- [ ] GC Content
-- [ ] Transcription
-- [ ] Reverse Transcription
-- [ ] Translation
-- [ ] Reverse Sequence
-- [ ] Sequence Length
-- [ ] Complement
-- [ ] Hamming Distance
-- [ ] General primer annealing temperature calculator 
-
-### Miscellaneous
-
-- [ ] Split up things into sensible modules
-- [ ] Add code for computing GC-content (IUPAC compatible)
-- [ ] Add an `rna()` constructor + tests + conversion / complementing code
-- [ ] Fill in `todo!()`s
+- Sequence Validation
+- Sequence Length
+- Count Sequence Elements (Bases / Residues)
+- Reverse Complement
+- Sequence Conversion
+  - DNA -> RNA

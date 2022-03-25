@@ -48,6 +48,7 @@ impl fmt::Display for Seq {
     }
 }
 
+// TODO: Add an `rna()` constructor + tests + conversion / complementing code
 impl Seq {
     // TODO: I should probably create a custom error type instead us using a string!
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
