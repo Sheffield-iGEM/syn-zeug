@@ -1,5 +1,5 @@
 use std::fs;
-use syn_zeug::*;
+use syn_zeug::seq::{Seq, SeqKind};
 
 pub fn count_bases() {
     let dna = Seq::dna(

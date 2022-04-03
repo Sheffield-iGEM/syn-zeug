@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use pprof::criterion::{Output, PProfProfiler};
 use std::fs;
-use syn_zeug::*;
+use syn_zeug::seq::{Seq, SeqKind};
 
 pub fn count_bases(c: &mut Criterion) {
     let dna = Seq::dna(

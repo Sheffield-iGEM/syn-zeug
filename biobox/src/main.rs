@@ -1,5 +1,5 @@
 use std::{env, error::Error, fs};
-use syn_zeug::*;
+use syn_zeug::seq::Seq;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<_> = dbg!(env::args().skip(1).collect());
