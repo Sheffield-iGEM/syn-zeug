@@ -1,7 +1,14 @@
 use bio::alphabets::{dna, rna};
-use std::{fmt, str::from_utf8};
+use std::{error::Error, fmt, str::from_utf8};
 
 use crate::data::{ByteMap, ALPHABETS};
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum SeqError {
+    InvalidKind(SeqKind),
+    RevComp(SeqKind),
+    Invalid,
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum SeqKind {
@@ -10,33 +17,14 @@ pub enum SeqKind {
     Protein,
 }
 
-impl fmt::Display for SeqKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self {
-            SeqKind::Dna => write!(f, "DNA")?,
-            SeqKind::Rna => write!(f, "RNA")?,
-            SeqKind::Protein => write!(f, "Protein")?,
-        }
-        Ok(())
-    }
-}
-
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Seq {
     bytes: Vec<u8>,
     kind: SeqKind,
 }
 
-impl fmt::Display for Seq {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: Would it be faster to use `from_utf8_unchecked()`? Do I care?
-        f.write_str(from_utf8(&self.bytes).expect("Seq did not contain valid UTF-8"))
-    }
-}
-
 impl Seq {
-    // TODO: I should probably create a custom error type instead us using a string!
-    fn new_with_kind(seq: impl AsRef<[u8]>, kind: SeqKind) -> Result<Self, String> {
+    fn new_with_kind(seq: impl AsRef<[u8]>, kind: SeqKind) -> Result<Self, SeqError> {
         let seq = seq.as_ref();
         if ALPHABETS[&kind].is_word(seq) {
             Ok(Self {
@@ -44,26 +32,26 @@ impl Seq {
                 kind,
             })
         } else {
-            Err(format!("The provided sequence was not valid {kind}"))
+            Err(SeqError::InvalidKind(kind))
         }
     }
 
-    pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, SeqError> {
         Self::dna(&seq)
             .or_else(|_| Self::rna(&seq))
             .or_else(|_| Self::protein(&seq))
-            .map_err(|_| "The provided sequence was not valid DNA, RNA, or Protein".to_string())
+            .map_err(|_| SeqError::Invalid)
     }
 
-    pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, SeqError> {
         Self::new_with_kind(seq, SeqKind::Dna)
     }
 
-    pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, SeqError> {
         Self::new_with_kind(seq, SeqKind::Rna)
     }
 
-    pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, SeqError> {
         Self::new_with_kind(seq, SeqKind::Protein)
     }
 
@@ -83,7 +71,7 @@ impl Seq {
         counts
     }
 
-    pub fn reverse_complement(&self) -> Result<Self, String> {
+    pub fn reverse_complement(&self) -> Result<Self, SeqError> {
         match self.kind {
             SeqKind::Dna => Ok(Self {
                 bytes: dna::revcomp(&self.bytes),
@@ -93,11 +81,11 @@ impl Seq {
                 bytes: rna::revcomp(&self.bytes),
                 ..*self
             }),
-            SeqKind::Protein => Err("Cannot reverse complement Protein".to_string()),
+            SeqKind::Protein => Err(SeqError::RevComp(self.kind)),
         }
     }
 
-    pub fn convert(&self, kind: SeqKind) -> Result<Self, String> {
+    pub fn convert(&self, kind: SeqKind) -> Result<Self, SeqError> {
         match (self.kind, kind) {
             (SeqKind::Dna, SeqKind::Rna) => Ok(Self {
                 bytes: self
@@ -109,6 +97,39 @@ impl Seq {
             }),
             _ => todo!(),
         }
+    }
+}
+
+impl fmt::Display for SeqError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SeqError::InvalidKind(kind) => write!(f, "The provided sequence was not valid {kind}")?,
+            SeqError::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
+            SeqError::Invalid => write!(
+                f,
+                "The provided sequence was not valid DNA, RNA, or Protein"
+            )?,
+        }
+        Ok(())
+    }
+}
+
+impl Error for SeqError {}
+
+impl fmt::Display for SeqKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SeqKind::Dna => write!(f, "DNA")?,
+            SeqKind::Rna => write!(f, "RNA")?,
+            SeqKind::Protein => write!(f, "Protein")?,
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for Seq {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(from_utf8(&self.bytes).expect("Seq did not contain valid UTF-8"))
     }
 }
 
@@ -141,12 +162,7 @@ mod tests {
     #[test]
     fn magic_not_sequence() {
         let protein = Seq::new("MAMAPUTEINSTRINX");
-        assert_eq!(
-            protein,
-            Err(String::from(
-                "The provided sequence was not valid DNA, RNA, or Protein"
-            ))
-        );
+        assert_eq!(protein, Err(SeqError::Invalid));
     }
 
     #[test]
@@ -159,14 +175,11 @@ mod tests {
     #[test]
     fn read_invalid_dna_sequence() {
         let dna = Seq::dna("AGCTTTXCATTCTGACNGCA");
-        assert_eq!(
-            dna,
-            Err(String::from("The provided sequence was not valid DNA"))
-        );
+        assert_eq!(dna, Err(SeqError::InvalidKind(SeqKind::Dna)));
     }
 
     #[test]
-    fn dna_to_string() -> Result<(), String> {
+    fn dna_to_string() -> Result<(), SeqError> {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
         assert_eq!(dna.to_string(), String::from("AGCTTTTCATTCTGACTGCA"));
         Ok(())
@@ -182,14 +195,11 @@ mod tests {
     #[test]
     fn read_invalid_rna_sequence() {
         let rna = Seq::rna("AGCUUTUCAUUCUGACTGCA");
-        assert_eq!(
-            rna,
-            Err(String::from("The provided sequence was not valid RNA"))
-        );
+        assert_eq!(rna, Err(SeqError::InvalidKind(SeqKind::Rna)));
     }
 
     #[test]
-    fn rna_to_string() -> Result<(), String> {
+    fn rna_to_string() -> Result<(), SeqError> {
         let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
         assert_eq!(rna.to_string(), String::from("AGCUUUUCAUUCUGACUGCA"));
         Ok(())
@@ -205,28 +215,25 @@ mod tests {
     #[test]
     fn read_invalid_protein_sequence() {
         let protein = Seq::protein("MAMAPUTEINSTRINX");
-        assert_eq!(
-            protein,
-            Err(String::from("The provided sequence was not valid Protein"))
-        );
+        assert_eq!(protein, Err(SeqError::InvalidKind(SeqKind::Protein)));
     }
 
     #[test]
-    fn protein_to_string() -> Result<(), String> {
+    fn protein_to_string() -> Result<(), SeqError> {
         let protein = Seq::protein("MAMAPRTEINSTRING")?;
         assert_eq!(protein.to_string(), String::from("MAMAPRTEINSTRING"));
         Ok(())
     }
 
     #[test]
-    fn get_sequence_length() -> Result<(), String> {
+    fn get_sequence_length() -> Result<(), SeqError> {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
         assert_eq!(dna.len(), 20);
         Ok(())
     }
 
     #[test]
-    fn is_sequence_empty() -> Result<(), String> {
+    fn is_sequence_empty() -> Result<(), SeqError> {
         let dna = Seq::dna("")?;
         assert!(dna.is_empty());
         let dna = Seq::dna("ACGT")?;
@@ -235,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn count_nucleotides() -> Result<(), String> {
+    fn count_nucleotides() -> Result<(), SeqError> {
         let dna =
             Seq::dna("AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC")?;
         let counts = dna.count_elements();
@@ -247,7 +254,7 @@ mod tests {
     }
 
     #[test]
-    fn dna_to_rna() -> Result<(), String> {
+    fn dna_to_rna() -> Result<(), SeqError> {
         let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
         let rna = dna.convert(SeqKind::Rna)?;
         assert_eq!(rna, Seq::rna("GAUGGAACUUGACUACGUAAAUU")?);
@@ -255,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    fn dna_to_rna_keep_case() -> Result<(), String> {
+    fn dna_to_rna_keep_case() -> Result<(), SeqError> {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
         let rna = dna.convert(SeqKind::Rna)?;
         assert_eq!(rna, Seq::rna("GaUgGaAcUuGaCuAcGuAaAuU")?);
@@ -263,39 +270,39 @@ mod tests {
     }
 
     #[test]
-    fn reverse_complement_dna() -> Result<(), String> {
+    fn reverse_complement_dna() -> Result<(), SeqError> {
         let dna = Seq::dna("AAAACCCGGT")?;
         assert_eq!(dna.reverse_complement()?.bytes, b"ACCGGGTTTT");
         Ok(())
     }
 
     #[test]
-    fn reverse_complement_dna_keep_case() -> Result<(), String> {
+    fn reverse_complement_dna_keep_case() -> Result<(), SeqError> {
         let dna = Seq::dna("aaaacCCGGT")?;
         assert_eq!(dna.reverse_complement()?.bytes, b"ACCGGgtttt");
         Ok(())
     }
 
     #[test]
-    fn reverse_complement_rna() -> Result<(), String> {
+    fn reverse_complement_rna() -> Result<(), SeqError> {
         let rna = Seq::rna("AAAACCCGGU")?;
         assert_eq!(rna.reverse_complement()?.bytes, b"ACCGGGUUUU");
         Ok(())
     }
 
     #[test]
-    fn reverse_complement_rna_keep_case() -> Result<(), String> {
+    fn reverse_complement_rna_keep_case() -> Result<(), SeqError> {
         let rna = Seq::rna("aaaacCCGGU")?;
         assert_eq!(rna.reverse_complement()?.bytes, b"ACCGGguuuu");
         Ok(())
     }
 
     #[test]
-    fn reverse_complement_protein() -> Result<(), String> {
+    fn reverse_complement_protein() -> Result<(), SeqError> {
         let protein = Seq::protein("MAMAPRTEINSTRING")?;
         assert_eq!(
             protein.reverse_complement(),
-            Err(String::from("Cannot reverse complement Protein"))
+            Err(SeqError::RevComp(SeqKind::Protein))
         );
         Ok(())
     }
