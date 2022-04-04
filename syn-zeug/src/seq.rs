@@ -1,8 +1,12 @@
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::{convert::FromWasmAbi, prelude::*};
+
 use bio::alphabets::{dna, rna};
 use std::{fmt, str::from_utf8};
 
 use crate::data::{ByteMap, ALPHABETS};
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum SeqKind {
     Dna,
@@ -21,11 +25,26 @@ impl fmt::Display for SeqKind {
     }
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Seq {
     bytes: Vec<u8>,
     kind: SeqKind,
 }
+
+#[cfg(target_arch = "wasm32")]
+pub trait AsBytes: AsRef<[u8]> + FromWasmAbi {}
+// #[cfg(target_arch = "wasm32")]
+// impl<T: ?Sized + AsRef<[u8]> + FromWasmAbi> AsBytes for &T {}
+// #[cfg(target_arch = "wasm32")]
+// impl<T: ?Sized + AsRef<[u8]> + FromWasmAbi> AsBytes for &mut T {}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub trait AsBytes: AsRef<[u8]> {}
+#[cfg(not(target_arch = "wasm32"))]
+impl<T: ?Sized + AsRef<[u8]>> AsBytes for &T {}
+#[cfg(not(target_arch = "wasm32"))]
+impl<T: ?Sized + AsRef<[u8]>> AsBytes for &mut T {}
 
 impl fmt::Display for Seq {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -34,9 +53,10 @@ impl fmt::Display for Seq {
     }
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl Seq {
     // TODO: I should probably create a custom error type instead us using a string!
-    fn new_with_kind(seq: impl AsRef<[u8]>, kind: SeqKind) -> Result<Self, String> {
+    fn new_with_kind(seq: impl AsBytes, kind: SeqKind) -> Result<Self, String> {
         let seq = seq.as_ref();
         if ALPHABETS[&kind].is_word(seq) {
             Ok(Self {
@@ -48,22 +68,22 @@ impl Seq {
         }
     }
 
-    pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, String> {
-        Seq::dna(&seq)
-            .or_else(|_| Seq::rna(&seq))
-            .or_else(|_| Seq::protein(&seq))
-            .map_err(|_| "The provided sequence was not valid DNA, RNA, or Protein".to_string())
-    }
+    // pub fn new(seq: impl AsBytes) -> Result<Self, String> {
+    //     Seq::dna(&seq)
+    //         .or_else(|_| Seq::rna(&seq))
+    //         .or_else(|_| Seq::protein(&seq))
+    //         .map_err(|_| "The provided sequence was not valid DNA, RNA, or Protein".to_string())
+    // }
 
-    pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn dna(seq: impl AsBytes) -> Result<Self, String> {
         Seq::new_with_kind(seq, SeqKind::Dna)
     }
 
-    pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn rna(seq: impl AsBytes) -> Result<Self, String> {
         Seq::new_with_kind(seq, SeqKind::Rna)
     }
 
-    pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, String> {
+    pub fn protein(seq: impl AsBytes) -> Result<Self, String> {
         Seq::new_with_kind(seq, SeqKind::Protein)
     }
 

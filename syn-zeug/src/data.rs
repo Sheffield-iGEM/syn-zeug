@@ -1,4 +1,6 @@
 use bio::alphabets::{dna, protein, rna, Alphabet};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::{convert::FromWasmAbi, prelude::*};
 use std::{
     collections::HashMap,
     ops::{Index, IndexMut},
@@ -16,6 +18,7 @@ pub static ALPHABETS: Lazy<HashMap<SeqKind, Alphabet>> = Lazy::new(|| {
     m
 });
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ByteMap<T>([T; 128]);
 
