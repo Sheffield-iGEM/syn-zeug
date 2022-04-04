@@ -306,4 +306,30 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    fn format_errors() {
+        assert_eq!(
+            &SeqError::InvalidKind(SeqKind::Dna).to_string(),
+            "The provided sequence was not valid DNA"
+        );
+        assert_eq!(
+            &SeqError::InvalidKind(SeqKind::Rna).to_string(),
+            "The provided sequence was not valid RNA"
+        );
+        assert_eq!(
+            &SeqError::InvalidKind(SeqKind::Protein).to_string(),
+            "The provided sequence was not valid Protein"
+        );
+
+        assert_eq!(
+            &SeqError::Invalid.to_string(),
+            "The provided sequence was not valid DNA, RNA, or Protein"
+        );
+
+        assert_eq!(
+            &SeqError::RevComp(SeqKind::Protein).to_string(),
+            "Cannot reverse complement Protein"
+        );
+    }
 }
