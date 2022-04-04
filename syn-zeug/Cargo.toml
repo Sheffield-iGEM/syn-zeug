@@ -4,11 +4,7 @@ version = "0.1.0"
 authors = ["Brooks J Rady <b.j.rady@gmail.com>"]
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
-getrandom = { version = "0.2", features = ["js"] }
 once_cell = "1.10"
 bio = "0.40"
 
