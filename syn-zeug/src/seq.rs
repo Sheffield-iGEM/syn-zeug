@@ -49,22 +49,22 @@ impl Seq {
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, String> {
-        Seq::dna(&seq)
-            .or_else(|_| Seq::rna(&seq))
-            .or_else(|_| Seq::protein(&seq))
+        Self::dna(&seq)
+            .or_else(|_| Self::rna(&seq))
+            .or_else(|_| Self::protein(&seq))
             .map_err(|_| "The provided sequence was not valid DNA, RNA, or Protein".to_string())
     }
 
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
-        Seq::new_with_kind(seq, SeqKind::Dna)
+        Self::new_with_kind(seq, SeqKind::Dna)
     }
 
     pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, String> {
-        Seq::new_with_kind(seq, SeqKind::Rna)
+        Self::new_with_kind(seq, SeqKind::Rna)
     }
 
     pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, String> {
-        Seq::new_with_kind(seq, SeqKind::Protein)
+        Self::new_with_kind(seq, SeqKind::Protein)
     }
 
     pub fn len(&self) -> usize {
