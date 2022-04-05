@@ -1,19 +1,18 @@
 <script lang="ts">
-  export let wasm;
+  import { Seq } from "biobox";
   let dna = "";
   let revcomp = "";
-  // TODO: Exception handling kinda super sucks
   $: try {
-    revcomp = new wasm.Seq(dna).reverse_complement()
-  } catch(e) {
-    revcomp = e
+    revcomp = new Seq(dna).reverse_complement().to_string();
+  } catch (e) {
+    revcomp = e;
   }
 </script>
 
 <main>
   <h1>Reverse Complement</h1>
-  <input bind:value={dna}/>
-  <p>{revcomp}</p>
+  <input bind:value={dna} />
+  <p>"{dna}" → "{revcomp}"</p>
 </main>
 
 <style>
@@ -22,6 +21,8 @@
     padding: 1em;
     max-width: 240px;
     margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   }
 
   h1 {

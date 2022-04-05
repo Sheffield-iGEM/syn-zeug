@@ -11,11 +11,12 @@ impl Seq {
         Ok(Seq(SZSeq::new(seq).map_err(|e| e.to_string())?))
     }
 
-    pub fn reverse_complement(&self) -> String {
-        // TODO: Surely there is a better way to do this?
-        match self.0.reverse_complement() {
-            Ok(s) => s.to_string(),
-            Err(e) => e.to_string(),
-        }
+    pub fn reverse_complement(&self) -> Result<Seq, String> {
+        Ok(Seq(self.0.reverse_complement().map_err(|e| e.to_string())?))
+    }
+
+    // TODO: I don't know if I need this – maybe I can just implement Display?
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
     }
 }

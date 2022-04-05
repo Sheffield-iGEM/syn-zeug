@@ -1,3 +1,4 @@
-/node_modules/
-/public/build/
-package-lock.json
+.snowpack
+.pnpm-debug.log
+build
+node_modules
