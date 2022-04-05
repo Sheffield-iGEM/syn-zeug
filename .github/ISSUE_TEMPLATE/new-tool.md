@@ -11,7 +11,7 @@ assignees: ''
 Describe the proposed tool's rationale and function
 
 **Is there an existing reference implementation?**
-Please link to any existing versions of this tool that can be used to verify it has been implemented correctly. [Rosalind](https://rosalind.info/) and [SMS2](https://www.bioinformatics.org/sms2/) are great places to start!
+Please link to any existing versions of this tool that can be used to verify it has been implemented correctly. [Rosalind](https://rosalind.info/), [SMS2](https://www.bioinformatics.org/sms2/), and [Expasy](https://www.expasy.org/) are great places to start!
 
 **What are the tool's inputs?**
 What type of data does this tool take in? What options / parameters can be tweaked by the user?
