@@ -9,17 +9,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install and Build
         run: |
+          cargo install wasm-pack
           corepack enable
           cd web
           pnpm install
           pnpm run build
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.5
+        uses: JamesIves/github-pages-deploy-action@4.3.0
         with:
           branch: gh-pages
           folder: web/build
