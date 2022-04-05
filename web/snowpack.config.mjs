@@ -35,6 +35,6 @@ export default {
     /* ... */
   },
   buildOptions: {
-    /* ... */
+    baseUrl: '/syn-zeug'
   },
 };
