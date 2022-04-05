@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "snowpack dev",
-    "build": "cd ../biobox && wasm-pack build --out-dir biobox --target web && cd - && snowpack build"
+    "build": "cd ../biobox && wasm-pack build --target web && cd - && snowpack build"
   },
   "dependencies": {
     "svelte": "^3.46.6"
