@@ -5,5 +5,5 @@ import wasmPack from 'vite-plugin-wasm-pack'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/syn-zeug/',
-  plugins: [svelte(), wasmPack('./biobox')]
+  plugins: [svelte(), wasmPack('../biobox')]
 })
