@@ -1,3 +1,5 @@
+// TODO: Keep an eye on this: https://github.com/rustwasm/wasm-bindgen/issues/2774
+#![allow(clippy::unused_unit)]
 use syn_zeug::seq::Seq as SZSeq;
 use wasm_bindgen::prelude::*;
 

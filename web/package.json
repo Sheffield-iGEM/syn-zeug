@@ -1,27 +1,24 @@
 {
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "snowpack dev",
-    "build": "cd ../biobox && wasm-pack build --out-dir biobox --target web && cd - && snowpack build"
-  },
-  "dependencies": {
-    "svelte": "^3.46.6"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "wasm": "wasm-pack build ../biobox --target web"
   },
   "devDependencies": {
-    "@snowpack/plugin-dotenv": "^2.2.0",
-    "@snowpack/plugin-svelte": "^3.7.0",
-    "@snowpack/plugin-typescript": "^1.2.1",
-    "@snowpack/web-test-runner-plugin": "^0.2.2",
-    "@testing-library/svelte": "^3.1.0",
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^3.0.0",
-    "@types/chai": "^4.3.0",
-    "@types/mocha": "^9.1.0",
-    "@types/snowpack-env": "^2.3.4",
-    "@web/test-runner": "^0.13.27",
-    "chai": "^4.3.6",
-    "snowpack": "^3.8.8",
-    "snowpack-plugin-wasm-pack": "^1.1.0",
-    "svelte-hmr": "^0.14.11",
-    "svelte-preprocess": "^4.10.5",
-    "typescript": "^4.6.3"
+    "svelte": "^3.44.0",
+    "svelte-check": "^2.2.7",
+    "svelte-preprocess": "^4.9.8",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.4",
+    "vite": "^2.9.0",
+    "vite-plugin-wasm-pack": "^0.1.9"
   }
 }

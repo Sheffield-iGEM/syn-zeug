@@ -17,10 +17,11 @@ jobs:
           corepack enable
           cd web
           pnpm install
-          pnpm run build
+          pnpm wasm
+          pnpm build
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.3.0
         with:
           branch: gh-pages
-          folder: web/build
+          folder: web/dist
