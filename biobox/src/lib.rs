@@ -9,16 +9,53 @@ pub struct Seq(SZSeq);
 #[wasm_bindgen]
 impl Seq {
     #[wasm_bindgen(constructor)]
+    // TODO: constructors![new, dna, rna, protein]
     pub fn new(seq: String) -> Result<Seq, String> {
         Ok(Seq(SZSeq::new(seq).map_err(|e| e.to_string())?))
     }
 
-    pub fn reverse_complement(&self) -> Result<Seq, String> {
-        Ok(Seq(self.0.reverse_complement().map_err(|e| e.to_string())?))
+    pub fn dna(seq: String) -> Result<Seq, String> {
+        Ok(Seq(SZSeq::dna(seq).map_err(|e| e.to_string())?))
     }
 
+    pub fn rna(seq: String) -> Result<Seq, String> {
+        Ok(Seq(SZSeq::rna(seq).map_err(|e| e.to_string())?))
+    }
+
+    pub fn protein(seq: String) -> Result<Seq, String> {
+        Ok(Seq(SZSeq::protein(seq).map_err(|e| e.to_string())?))
+    }
+
+    // TODO: delegate!{
+    // len(&self) -> usize;
+    // is_empty(&self) -> bool
+    // ... always start with &self, eventually allow more args
+    // }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    // TODO: Add ByteMap.into() -> HashMap then add serde_wasm_bindgen
+    pub fn count_elements(&self) -> Result<(), JsValue> {
+        todo!()
+    }
+
+    pub fn reverse_complement(&self) -> Result<Seq, String> {
+        Ok(Seq(self
+            .0
+            .reverse_complement()
+            .map_err(|e| e.to_string())?))
+    }
+
+    // TODO: I need a `.type()` getter
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.0.to_string()
     }
 }
+
+// TODO: Wrap and export SeqKind
