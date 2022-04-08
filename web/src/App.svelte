@@ -1,11 +1,32 @@
 <script lang="ts">
   import { Seq } from "biobox";
   let dna = "";
+  let input = "";
+  let seq = null; // FIXME: Add a real type!
+  let kind = "";
+  let len = 0;
+  let count = null; // FIXME: What type should this really be?
   let revcomp = "";
+  let rna = "";
+  $: input = dna;
   $: try {
-    revcomp = new Seq(dna.trim()).reverse_complement().to_string();
+    seq = new Seq(dna.trim());
+  } catch (e) {
+    seq = new Seq("");
+    input = e;
+  }
+  $: kind = seq.kind();
+  $: len = seq.len();
+  $: count = JSON.stringify([...seq.count_elements().entries()]);
+  $: try {
+    revcomp = seq.reverse_complement().to_string();
   } catch (e) {
     revcomp = e;
+  }
+  $: try {
+    rna = seq.convert("Rna").to_string();
+  } catch (e) {
+    rna = e;
   }
 </script>
 
@@ -132,8 +153,12 @@
           <i class="fas fa-reply-all" />
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
-          >{revcomp}</textarea
-        >
+          >{`Input: "${input}"
+Type: ${kind}
+Length: ${len}
+Counts: ${count}
+RevComp: "${revcomp}"
+To RNA: "${rna}"`}</textarea>
       </div>
     </div>
   </div>
