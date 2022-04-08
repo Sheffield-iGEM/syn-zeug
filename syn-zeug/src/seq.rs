@@ -6,6 +6,7 @@ use crate::data::{ByteMap, ALPHABETS};
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum SeqError {
+    InvalidConversion(SeqKind, SeqKind),
     InvalidKind(SeqKind),
     RevComp(SeqKind),
     Invalid,
@@ -92,6 +93,7 @@ impl Seq {
 
     pub fn convert(&self, kind: SeqKind) -> Result<Self, SeqError> {
         match (self.kind, kind) {
+            (SeqKind::Dna, SeqKind::Dna) => Ok(self.clone()),
             (SeqKind::Dna, SeqKind::Rna) => Ok(Self {
                 bytes: self
                     .bytes
@@ -100,7 +102,9 @@ impl Seq {
                     .collect(),
                 kind: SeqKind::Rna,
             }),
-            _ => todo!(),
+            (SeqKind::Rna, SeqKind::Rna) => Ok(self.clone()),
+            (SeqKind::Protein, SeqKind::Protein) => Ok(self.clone()),
+            (from, to) => Err(SeqError::InvalidConversion(from, to)),
         }
     }
 }
@@ -108,6 +112,7 @@ impl Seq {
 impl fmt::Display for SeqError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            SeqError::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
             SeqError::InvalidKind(kind) => write!(f, "The provided sequence was not valid {kind}")?,
             SeqError::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
             SeqError::Invalid => write!(
@@ -259,6 +264,17 @@ mod tests {
     }
 
     #[test]
+    fn self_conversions() -> Result<(), SeqError> {
+        let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
+        let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
+        let protein = Seq::protein("MAMAPRTEINSTRING")?;
+        assert_eq!(dna, dna.convert(SeqKind::Dna)?);
+        assert_eq!(rna, rna.convert(SeqKind::Rna)?);
+        assert_eq!(protein, protein.convert(SeqKind::Protein)?);
+        Ok(())
+    }
+
+    #[test]
     fn dna_to_rna() -> Result<(), SeqError> {
         let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
         let rna = dna.convert(SeqKind::Rna)?;
@@ -271,6 +287,20 @@ mod tests {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
         let rna = dna.convert(SeqKind::Rna)?;
         assert_eq!(rna, Seq::rna("GaUgGaAcUuGaCuAcGuAaAuU")?);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_conversions() -> Result<(), SeqError> {
+        let protein = Seq::protein("MAMAPRTEINSTRING")?;
+        assert_eq!(
+            protein.convert(SeqKind::Dna),
+            Err(SeqError::InvalidConversion(SeqKind::Protein, SeqKind::Dna))
+        );
+        assert_eq!(
+            protein.convert(SeqKind::Rna),
+            Err(SeqError::InvalidConversion(SeqKind::Protein, SeqKind::Rna))
+        );
         Ok(())
     }
 
@@ -314,6 +344,14 @@ mod tests {
 
     #[test]
     fn format_errors() {
+        assert_eq!(
+            &SeqError::InvalidConversion(SeqKind::Protein, SeqKind::Dna).to_string(),
+            "Cannot convert Protein to DNA"
+        );
+        assert_eq!(
+            &SeqError::InvalidConversion(SeqKind::Protein, SeqKind::Rna).to_string(),
+            "Cannot convert Protein to RNA"
+        );
         assert_eq!(
             &SeqError::InvalidKind(SeqKind::Dna).to_string(),
             "The provided sequence was not valid DNA"
