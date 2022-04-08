@@ -1,23 +1,24 @@
 use bio::alphabets::{dna, rna};
+use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, str::from_utf8};
 
 use crate::data::{ByteMap, ALPHABETS};
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum SeqError {
     InvalidKind(SeqKind),
     RevComp(SeqKind),
     Invalid,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum SeqKind {
     Dna,
     Rna,
     Protein,
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct Seq {
     bytes: Vec<u8>,
     kind: SeqKind,
@@ -53,6 +54,10 @@ impl Seq {
 
     pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, SeqError> {
         Self::new_with_kind(seq, SeqKind::Protein)
+    }
+
+    pub fn kind(&self) -> SeqKind {
+        self.kind
     }
 
     pub fn len(&self) -> usize {
@@ -142,21 +147,21 @@ mod tests {
     fn magic_dna_sequence() {
         let dna = Seq::new("AGCTTTTCATTCTGACTGCA");
         assert!(dna.is_ok());
-        assert_eq!(dna.unwrap().kind, SeqKind::Dna);
+        assert_eq!(dna.unwrap().kind(), SeqKind::Dna);
     }
 
     #[test]
     fn magic_rna_sequence() {
         let rna = Seq::new("AGCUUUUCAUUCUGACUGCA");
         assert!(rna.is_ok());
-        assert_eq!(rna.unwrap().kind, SeqKind::Rna);
+        assert_eq!(rna.unwrap().kind(), SeqKind::Rna);
     }
 
     #[test]
     fn magic_protein_sequence() {
         let protein = Seq::new("MAMAPRTEINSTRING");
         assert!(protein.is_ok());
-        assert_eq!(protein.unwrap().kind, SeqKind::Protein);
+        assert_eq!(protein.unwrap().kind(), SeqKind::Protein);
     }
 
     #[test]
@@ -169,7 +174,7 @@ mod tests {
     fn read_valid_dna_sequence() {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA");
         assert!(dna.is_ok());
-        assert_eq!(dna.unwrap().kind, SeqKind::Dna);
+        assert_eq!(dna.unwrap().kind(), SeqKind::Dna);
     }
 
     #[test]
@@ -189,7 +194,7 @@ mod tests {
     fn read_valid_rna_sequence() {
         let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA");
         assert!(rna.is_ok());
-        assert_eq!(rna.unwrap().kind, SeqKind::Rna);
+        assert_eq!(rna.unwrap().kind(), SeqKind::Rna);
     }
 
     #[test]
@@ -209,7 +214,7 @@ mod tests {
     fn read_valid_protein_sequence() {
         let protein = Seq::protein("MAMAPRTEINSTRING");
         assert!(protein.is_ok());
-        assert_eq!(protein.unwrap().kind, SeqKind::Protein);
+        assert_eq!(protein.unwrap().kind(), SeqKind::Protein);
     }
 
     #[test]
