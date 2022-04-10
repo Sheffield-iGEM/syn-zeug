@@ -70,7 +70,7 @@ impl Seq {
     }
     pub fn rev(&self) -> Self {
         Self {
-            bytes:self.bytes.clone().into_iter().rev().collect(),
+            bytes:self.bytes.iter().copied().rev().collect(),
             ..*self
         }
     }
