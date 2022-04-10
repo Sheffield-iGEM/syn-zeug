@@ -1,7 +1,18 @@
 use std::fs;
 use syn_zeug::seq::{Seq, SeqKind};
 
-pub fn count_bases() {
+pub fn rev() {
+    let dna = Seq::dna(
+        fs::read_to_string("benches/data/rosalind_dna.txt")
+            .unwrap()
+            .trim()
+            .as_bytes(),
+    )
+    .unwrap();
+    dna.rev();
+}
+
+pub fn count_elements() {
     let dna = Seq::dna(
         fs::read_to_string("benches/data/rosalind_dna.txt")
             .unwrap()
@@ -34,4 +45,4 @@ pub fn reverse_complement_dna() {
     dna.reverse_complement().unwrap();
 }
 
-iai::main!(count_bases, dna_to_rna, reverse_complement_dna);
+iai::main!(rev, count_elements, dna_to_rna, reverse_complement_dna);
