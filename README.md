@@ -10,6 +10,7 @@ A modern toolbox for synthetic biology
 ### Basic
 - Sequence Validation
 - Sequence Length
+- Reverse Sequence
 - Count Sequence Elements (Bases / Residues)
 - Reverse Complement
 - Sequence Conversion
