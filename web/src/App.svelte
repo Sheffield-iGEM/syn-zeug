@@ -6,6 +6,7 @@
   let kind = "";
   let len = 0;
   let count = null; // FIXME: What type should this really be?
+  let rev = "";
   let revcomp = "";
   let rna = "";
   $: input = dna;
@@ -17,6 +18,7 @@
   }
   $: kind = seq.kind();
   $: len = seq.len();
+  $: rev = seq.rev().to_string();
   $: count = JSON.stringify([...seq.count_elements().entries()]);
   $: try {
     revcomp = seq.reverse_complement().to_string();
@@ -157,6 +159,7 @@
 Type: ${kind}
 Length: ${len}
 Counts: ${count}
+Reverse: "${rev}"
 RevComp: "${revcomp}"
 To RNA: "${rna}"`}</textarea>
       </div>

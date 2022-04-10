@@ -3,7 +3,18 @@ use pprof::criterion::{Output, PProfProfiler};
 use std::fs;
 use syn_zeug::seq::{Seq, SeqKind};
 
-pub fn count_bases(c: &mut Criterion) {
+pub fn rev(c: &mut Criterion) {
+    let dna = Seq::dna(
+        fs::read_to_string("benches/data/rosalind_dna.txt")
+            .unwrap()
+            .trim()
+            .as_bytes(),
+    )
+    .unwrap();
+    c.bench_function("rev 1kb", |b| b.iter(|| dna.rev()));
+}
+
+pub fn count_elements(c: &mut Criterion) {
     let dna = Seq::dna(
         fs::read_to_string("benches/data/rosalind_dna.txt")
             .unwrap()
@@ -25,7 +36,7 @@ pub fn dna_to_rna(c: &mut Criterion) {
     c.bench_function("dna_to_rna 1kb", |b| b.iter(|| dna.convert(SeqKind::Rna)));
 }
 
-pub fn reverse_complement_dna(c: &mut Criterion) {
+pub fn reverse_complement(c: &mut Criterion) {
     let dna = Seq::dna(
         fs::read_to_string("benches/data/rosalind_revc.txt")
             .unwrap()
@@ -33,7 +44,7 @@ pub fn reverse_complement_dna(c: &mut Criterion) {
             .as_bytes(),
     )
     .unwrap();
-    c.bench_function("reverse_complement_dna 1kb", |b| {
+    c.bench_function("reverse_complement 1kb", |b| {
         b.iter(|| dna.reverse_complement())
     });
 }
@@ -41,6 +52,6 @@ pub fn reverse_complement_dna(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = count_bases, dna_to_rna, reverse_complement_dna
+    targets = rev, count_elements, dna_to_rna, reverse_complement
 );
 criterion_main!(benches);

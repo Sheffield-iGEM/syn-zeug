@@ -68,12 +68,14 @@ impl Seq {
     pub fn is_empty(&self) -> bool {
         self.bytes.is_empty()
     }
+
     pub fn rev(&self) -> Self {
         Self {
-            bytes:self.bytes.iter().copied().rev().collect(),
+            bytes: self.bytes.iter().copied().rev().collect(),
             ..*self
         }
     }
+
     pub fn count_elements(&self) -> ByteMap<usize> {
         let mut counts = ByteMap::default();
         for &b in &self.bytes {
@@ -257,10 +259,18 @@ mod tests {
     }
 
     #[test]
-    fn rev_seq() -> Result<(), SeqError> {
+    fn reverse_sequence() -> Result<(), SeqError> {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
         let dna_rev = Seq::dna("ACGTCAGTCTTACTTTTCGA")?;
         assert_eq!(dna.rev(), dna_rev);
+
+        let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
+        let rna_rev = Seq::rna("ACGUCAGUCUUACUUUUCGA")?;
+        assert_eq!(rna.rev(), rna_rev);
+
+        let protein = Seq::protein("MAMAPRTEINSTRING")?;
+        let protein_rev = Seq::protein("GNIRTSNIETRPAMAM")?;
+        assert_eq!(protein.rev(), protein_rev);
         Ok(())
     }
 
@@ -377,12 +387,10 @@ mod tests {
             &SeqError::InvalidKind(SeqKind::Protein).to_string(),
             "The provided sequence was not valid Protein"
         );
-
         assert_eq!(
             &SeqError::Invalid.to_string(),
             "The provided sequence was not valid DNA, RNA, or Protein"
         );
-
         assert_eq!(
             &SeqError::RevComp(SeqKind::Protein).to_string(),
             "Cannot reverse complement Protein"

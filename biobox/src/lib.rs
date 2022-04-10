@@ -45,6 +45,10 @@ impl Seq {
         self.0.is_empty()
     }
 
+    pub fn rev(&self) -> Seq {
+        Seq(self.0.rev())
+    }
+
     // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
     pub fn count_elements(&self) -> Result<JsValue, String> {
         let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|x| x != 0);
