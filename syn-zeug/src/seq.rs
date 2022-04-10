@@ -68,7 +68,12 @@ impl Seq {
     pub fn is_empty(&self) -> bool {
         self.bytes.is_empty()
     }
-
+    pub fn rev(&self) -> Self {
+        Self {
+            bytes:self.bytes.clone().into_iter().rev().collect(),
+            ..*self
+        }
+    }
     pub fn count_elements(&self) -> ByteMap<usize> {
         let mut counts = ByteMap::default();
         for &b in &self.bytes {
@@ -248,6 +253,14 @@ mod tests {
         assert!(dna.is_empty());
         let dna = Seq::dna("ACGT")?;
         assert!(!dna.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn rev_seq() -> Result<(), SeqError> {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
+        let dna_rev = Seq::dna("ACGTCAGTCTTACTTTTCGA")?;
+        assert_eq!(dna.rev(), dna_rev);
         Ok(())
     }
 
