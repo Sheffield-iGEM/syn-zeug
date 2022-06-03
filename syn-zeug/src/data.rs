@@ -4,16 +4,16 @@ use std::{
     hash::Hash,
     ops::{Index, IndexMut},
 };
-// Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
+// TODO: Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
-use crate::seq::SeqKind;
+use crate::seq::Kind;
 
-pub static ALPHABETS: Lazy<HashMap<SeqKind, Alphabet>> = Lazy::new(|| {
+pub static ALPHABETS: Lazy<HashMap<Kind, Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(SeqKind::Dna, dna::iupac_alphabet());
-    m.insert(SeqKind::Rna, rna::iupac_alphabet());
-    m.insert(SeqKind::Protein, protein::iupac_alphabet());
+    m.insert(Kind::Dna, dna::iupac_alphabet());
+    m.insert(Kind::Rna, rna::iupac_alphabet());
+    m.insert(Kind::Protein, protein::iupac_alphabet());
     m
 });
 

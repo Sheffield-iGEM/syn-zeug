@@ -1,7 +1,7 @@
 mod utils;
 
 use once_cell::sync::Lazy;
-use syn_zeug::seq::{Seq, SeqKind};
+use syn_zeug::seq::{Kind, Seq};
 
 static DNA: Lazy<Seq> = Lazy::new(|| Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap());
 
@@ -14,7 +14,7 @@ fn count_elements() {
 }
 
 fn dna_to_rna() {
-    DNA.convert(SeqKind::Rna).unwrap();
+    DNA.convert(Kind::Rna).unwrap();
 }
 
 fn reverse_complement_dna() {

@@ -3,7 +3,7 @@ mod utils;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use pprof::criterion::{Output, PProfProfiler};
 use std::time::Duration;
-use syn_zeug::seq::{Seq, SeqKind};
+use syn_zeug::seq::{Kind, Seq};
 
 fn rev(c: &mut Criterion) {
     bench_time_complexity(c, "rev", "rosalind_dna.txt", Seq::dna, Seq::rev);
@@ -21,7 +21,7 @@ fn count_elements(c: &mut Criterion) {
 
 fn dna_to_rna(c: &mut Criterion) {
     bench_time_complexity(c, "dna_to_rna", "rosalind_dna.txt", Seq::dna, |seq| {
-        seq.convert(SeqKind::Rna)
+        seq.convert(Kind::Rna)
     });
 }
 

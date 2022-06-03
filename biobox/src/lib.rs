@@ -1,5 +1,3 @@
-// TODO: Keep an eye on this: https://github.com/rustwasm/wasm-bindgen/issues/2774
-#![allow(clippy::unused_unit)]
 use std::collections::HashMap;
 
 use syn_zeug::seq::Seq as SZSeq;
