@@ -1,48 +1,24 @@
-use std::fs;
+mod utils;
+
+use once_cell::sync::Lazy;
 use syn_zeug::seq::{Seq, SeqKind};
 
-pub fn rev() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_dna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
-    dna.rev();
+static DNA: Lazy<Seq> = Lazy::new(|| Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap());
+
+fn rev() {
+    DNA.rev();
 }
 
-pub fn count_elements() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_dna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
-    dna.count_elements();
+fn count_elements() {
+    DNA.count_elements();
 }
 
-pub fn dna_to_rna() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_rna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
-    dna.convert(SeqKind::Rna).unwrap();
+fn dna_to_rna() {
+    DNA.convert(SeqKind::Rna).unwrap();
 }
 
-pub fn reverse_complement_dna() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_revc.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
-    dna.reverse_complement().unwrap();
+fn reverse_complement_dna() {
+    DNA.reverse_complement().unwrap();
 }
 
 iai::main!(rev, count_elements, dna_to_rna, reverse_complement_dna);
