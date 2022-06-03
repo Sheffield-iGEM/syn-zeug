@@ -1,47 +1,24 @@
-use std::fs;
+mod utils;
+
 use syn_zeug::seq::{Seq, SeqKind};
 
 pub fn rev() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_dna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
+    let dna = Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap();
     dna.rev();
 }
 
 pub fn count_elements() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_dna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
+    let dna = Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap();
     dna.count_elements();
 }
 
 pub fn dna_to_rna() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_rna.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
+    let dna = Seq::dna(utils::load_bench_data("rosalind_rna.txt")).unwrap();
     dna.convert(SeqKind::Rna).unwrap();
 }
 
 pub fn reverse_complement_dna() {
-    let dna = Seq::dna(
-        fs::read_to_string("benches/data/rosalind_revc.txt")
-            .unwrap()
-            .trim()
-            .as_bytes(),
-    )
-    .unwrap();
+    let dna = Seq::dna(utils::load_bench_data("rosalind_revc.txt")).unwrap();
     dna.reverse_complement().unwrap();
 }
 
