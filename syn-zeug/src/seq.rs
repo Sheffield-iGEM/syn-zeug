@@ -1,60 +1,94 @@
 use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
-use std::{fmt, str::from_utf8};
+use std::{fmt, iter, str::from_utf8};
+use strum::{EnumIter, IntoEnumIterator};
 
 use crate::data::{ByteMap, ALPHABETS};
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
     InvalidConversion(Kind, Kind),
-    InvalidKind(Kind),
+    InvalidKind(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
-    Invalid,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
+)]
 pub enum Kind {
     Dna,
     Rna,
     Protein,
 }
 
+// TODO: Use strum to iterate over this!
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
+)]
+pub enum Alphabet {
+    Canonical, // TODO: Rename this `Default`?
+    N,
+    Iupac,
+}
+
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct Seq {
     bytes: Vec<u8>,
     kind: Kind,
+    alphabet: Alphabet,
 }
 
 impl Seq {
-    fn new_with_kind(seq: impl AsRef<[u8]>, kind: Kind) -> Result<Self, Error> {
+    // TODO: Rename and clean up this rubbish...
+    pub fn new_with_kind(
+        seq: impl AsRef<[u8]>,
+        kinds: impl AsRef<[Kind]>,
+        alphabet: Alphabet,
+    ) -> Result<Self, Error> {
+        // TODO: Audit `collect` and `clone` calls
+        let potential_alphabets: Vec<_> = Alphabet::iter().filter(|&a| a <= alphabet).collect();
+        // TODO: Try optimising this to not zip things, just producing a Vec<(Kind, Alphabet)>
+        // That would mean no unzipping on error, but also might slow things down by checking
+        // ALPHABETS twice? Once for the filter contains_key and again for the actual getting
+        let potential_kinds: Vec<_> = kinds
+            .as_ref()
+            .iter()
+            .flat_map(|&k| iter::repeat(k).zip(potential_alphabets.iter().copied()))
+            .filter_map(|ka| ALPHABETS.get(&ka).map(|a| (ka, a)))
+            .collect();
         let seq = seq.as_ref();
-        if ALPHABETS[&kind].is_word(seq) {
+        // TODO: Need to optimise this with a single-pass fold approach (instead of `find`
+        // which will scan parts of the sequence several times for types like IUPAC protein)
+        if let Some(&((kind, alphabet), _)) = potential_kinds.iter().find(|(_, s)| s.is_word(seq)) {
             Ok(Self {
                 bytes: seq.to_vec(),
                 kind,
+                alphabet,
             })
         } else {
-            Err(Error::InvalidKind(kind))
+            // FIXME: Wrong logic
+            // TODO: Is there a nicer solution using `iter::unzip`?
+            Err(Error::InvalidKind(
+                potential_kinds.iter().map(|&(k, _)| k).collect(),
+            ))
         }
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::dna(&seq)
-            .or_else(|_| Self::rna(&seq))
-            .or_else(|_| Self::protein(&seq))
-            .map_err(|_| Error::Invalid)
+        Self::new_with_kind(&seq, Kind::iter().collect::<Vec<_>>(), Alphabet::Iupac)
     }
 
+    // TODO: Implement `dna_n` and `dna_iupac`
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, Kind::Dna)
+        Self::new_with_kind(seq, [Kind::Dna], Alphabet::Canonical)
     }
 
     pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, Kind::Rna)
+        Self::new_with_kind(seq, [Kind::Rna], Alphabet::Canonical)
     }
 
     pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, Kind::Protein)
+        Self::new_with_kind(seq, [Kind::Protein], Alphabet::Canonical)
     }
 
     pub fn kind(&self) -> Kind {
@@ -109,6 +143,7 @@ impl Seq {
                     .map(|&b| if b == b'T' || b == b't' { b + 1 } else { b })
                     .collect(),
                 kind: Kind::Rna,
+                ..*self
             }),
             (from, to) => Err(Error::InvalidConversion(from, to)),
         }
@@ -119,12 +154,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
-            Error::InvalidKind(kind) => write!(f, "The provided sequence was not valid {kind}")?,
+            Error::InvalidKind(kind) => write!(f, "The provided sequence was not valid {kind:?}")?,
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
-            Error::Invalid => write!(
-                f,
-                "The provided sequence was not valid DNA, RNA, or Protein"
-            )?,
         }
         Ok(())
     }
@@ -178,7 +209,7 @@ mod tests {
     #[test]
     fn magic_not_sequence() {
         let protein = Seq::new("MAMAPUTEINSTRINX");
-        assert_eq!(protein, Err(Error::Invalid));
+        assert_eq!(protein, Err(Error::InvalidKind(Default::default())));
     }
 
     #[test]
@@ -191,7 +222,7 @@ mod tests {
     #[test]
     fn read_invalid_dna_sequence() {
         let dna = Seq::dna("AGCTTTXCATTCTGACNGCA");
-        assert_eq!(dna, Err(Error::InvalidKind(Kind::Dna)));
+        assert_eq!(dna, Err(Error::InvalidKind(Default::default())));
     }
 
     #[test]
@@ -211,7 +242,7 @@ mod tests {
     #[test]
     fn read_invalid_rna_sequence() {
         let rna = Seq::rna("AGCUUTUCAUUCUGACTGCA");
-        assert_eq!(rna, Err(Error::InvalidKind(Kind::Rna)));
+        assert_eq!(rna, Err(Error::InvalidKind(Default::default())));
     }
 
     #[test]
@@ -231,7 +262,7 @@ mod tests {
     #[test]
     fn read_invalid_protein_sequence() {
         let protein = Seq::protein("MAMAPUTEINSTRINX");
-        assert_eq!(protein, Err(Error::InvalidKind(Kind::Protein)));
+        assert_eq!(protein, Err(Error::InvalidKind(Default::default())));
     }
 
     #[test]
@@ -375,20 +406,16 @@ mod tests {
             "Cannot convert Protein to RNA"
         );
         assert_eq!(
-            &Error::InvalidKind(Kind::Dna).to_string(),
+            &Error::InvalidKind(Default::default()).to_string(),
             "The provided sequence was not valid DNA"
         );
         assert_eq!(
-            &Error::InvalidKind(Kind::Rna).to_string(),
+            &Error::InvalidKind(Default::default()).to_string(),
             "The provided sequence was not valid RNA"
         );
         assert_eq!(
-            &Error::InvalidKind(Kind::Protein).to_string(),
+            &Error::InvalidKind(Default::default()).to_string(),
             "The provided sequence was not valid Protein"
-        );
-        assert_eq!(
-            &Error::Invalid.to_string(),
-            "The provided sequence was not valid DNA, RNA, or Protein"
         );
         assert_eq!(
             &Error::RevComp(Kind::Protein).to_string(),

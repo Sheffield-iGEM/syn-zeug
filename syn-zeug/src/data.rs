@@ -1,4 +1,4 @@
-use bio::alphabets::{dna, protein, rna, Alphabet};
+use bio::alphabets::{dna, protein, rna};
 use std::{
     collections::HashMap,
     hash::Hash,
@@ -7,13 +7,20 @@ use std::{
 // TODO: Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
-use crate::seq::Kind;
+use crate::seq::{Kind, Alphabet};
 
-pub static ALPHABETS: Lazy<HashMap<Kind, Alphabet>> = Lazy::new(|| {
+pub static ALPHABETS: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert(Kind::Dna, dna::iupac_alphabet());
-    m.insert(Kind::Rna, rna::iupac_alphabet());
-    m.insert(Kind::Protein, protein::iupac_alphabet());
+    m.insert((Kind::Dna, Alphabet::Canonical), dna::alphabet());
+    m.insert((Kind::Dna, Alphabet::N), dna::n_alphabet());
+    m.insert((Kind::Dna, Alphabet::Iupac), dna::iupac_alphabet());
+
+    m.insert((Kind::Rna, Alphabet::Canonical), rna::alphabet());
+    m.insert((Kind::Rna, Alphabet::N), rna::n_alphabet());
+    m.insert((Kind::Rna, Alphabet::Iupac), rna::iupac_alphabet());
+
+    m.insert((Kind::Protein, Alphabet::Canonical), protein::alphabet());
+    m.insert((Kind::Protein, Alphabet::Iupac), protein::iupac_alphabet());
     m
 });
 
