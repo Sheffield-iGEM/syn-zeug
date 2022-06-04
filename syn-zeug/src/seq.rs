@@ -40,7 +40,7 @@ pub struct Seq {
 
 impl Seq {
     // TODO: Rename and clean up this rubbish...
-    pub fn new_with_kind(
+    pub fn new_with_kind_old(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
         alphabet: Alphabet,
@@ -66,12 +66,77 @@ impl Seq {
                 alphabet,
             })
         } else {
-            // FIXME: Wrong logic
             // TODO: Is there a nicer solution using `iter::unzip`?
             Err(Error::InvalidKind(
                 potential_kinds.iter().map(|&(k, _)| k).collect(),
             ))
         }
+    }
+
+    // TODO: Also needs benchmarking that shows tests sequences where the first element isn't part
+    // of any alphabet. That should be O(1) because the rest of the input is ignored!
+    pub fn new_with_kind(
+        seq: impl AsRef<[u8]>,
+        kinds: impl AsRef<[Kind]>,
+        alphabet: Alphabet,
+    ) -> Result<Self, Error> {
+        // TODO: Audit `collect` and `clone` calls
+        let potential_kinds: Vec<_> = kinds
+            .as_ref()
+            .iter()
+            .flat_map(|&k| iter::repeat(k).zip(Alphabet::iter().filter(|&a| a <= alphabet)))
+            .filter(|ka| ALPHABETS.contains_key(ka))
+            .collect();
+        let seq = seq.as_ref();
+        let mut potential_alphabets = potential_kinds.iter().map(|ka| (ka, &ALPHABETS[ka])).peekable();
+        // for &c in seq {
+        //     while let Some((_, a)) = potential_alphabets.peek() {
+        //         if a.symbols.contains(c as usize) {
+        //             break;
+        //         } else {
+        //             potential_alphabets.next();
+        //         }
+        //     }
+        // }
+        // if let Some((&(kind, alphabet), _)) = potential_alphabets.next() {
+        //     Ok(Self {
+        //         bytes: seq.to_vec(),
+        //         kind,
+        //         alphabet,
+        //     })
+        // } else {
+        //     Err(Error::InvalidKind(potential_kinds))
+        // }
+        // FIXME: Unwrap is giga stinky
+        if let Some((&(kind, alphabet), _)) = seq
+            .iter()
+            .try_fold(potential_alphabets.next(), |mut ka, &c| {
+                // TODO: Maybe stable in 1.63? (https://github.com/rust-lang/rust/pull/94927)
+                // while let Some((_, a)) = ka && !a.symbols.contains(c) {
+                while let Some((_, a)) = ka {
+                    if !a.symbols.contains(c as usize) {
+                        ka = potential_alphabets.next()
+                    } else {
+                        return Some(ka);
+                    }
+                }
+                None
+            })
+            .flatten()
+        {
+            Ok(Self {
+                bytes: seq.to_vec(),
+                kind,
+                alphabet,
+            })
+        } else {
+            // TODO: Is there a nicer solution using `iter::unzip`?
+            Err(Error::InvalidKind(potential_kinds))
+        }
+    }
+
+    pub fn new_old(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind_old(&seq, Kind::iter().collect::<Vec<_>>(), Alphabet::Iupac)
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
@@ -209,7 +274,19 @@ mod tests {
     #[test]
     fn magic_not_sequence() {
         let protein = Seq::new("MAMAPUTEINSTRINX");
-        assert_eq!(protein, Err(Error::InvalidKind(Default::default())));
+        assert_eq!(
+            protein,
+            Err(Error::InvalidKind(vec![
+                (Kind::Dna, Alphabet::Canonical),
+                (Kind::Dna, Alphabet::N),
+                (Kind::Dna, Alphabet::Iupac),
+                (Kind::Rna, Alphabet::Canonical),
+                (Kind::Rna, Alphabet::N),
+                (Kind::Rna, Alphabet::Iupac),
+                (Kind::Protein, Alphabet::Canonical),
+                (Kind::Protein, Alphabet::Iupac)
+            ]))
+        );
     }
 
     #[test]
@@ -222,7 +299,10 @@ mod tests {
     #[test]
     fn read_invalid_dna_sequence() {
         let dna = Seq::dna("AGCTTTXCATTCTGACNGCA");
-        assert_eq!(dna, Err(Error::InvalidKind(Default::default())));
+        assert_eq!(
+            dna,
+            Err(Error::InvalidKind(vec![(Kind::Dna, Alphabet::Canonical)]))
+        );
     }
 
     #[test]
@@ -242,7 +322,10 @@ mod tests {
     #[test]
     fn read_invalid_rna_sequence() {
         let rna = Seq::rna("AGCUUTUCAUUCUGACTGCA");
-        assert_eq!(rna, Err(Error::InvalidKind(Default::default())));
+        assert_eq!(
+            rna,
+            Err(Error::InvalidKind(vec![(Kind::Rna, Alphabet::Canonical)]))
+        );
     }
 
     #[test]
@@ -262,7 +345,13 @@ mod tests {
     #[test]
     fn read_invalid_protein_sequence() {
         let protein = Seq::protein("MAMAPUTEINSTRINX");
-        assert_eq!(protein, Err(Error::InvalidKind(Default::default())));
+        assert_eq!(
+            protein,
+            Err(Error::InvalidKind(vec![(
+                Kind::Protein,
+                Alphabet::Canonical
+            )]))
+        );
     }
 
     #[test]
@@ -405,18 +494,19 @@ mod tests {
             &Error::InvalidConversion(Kind::Protein, Kind::Rna).to_string(),
             "Cannot convert Protein to RNA"
         );
-        assert_eq!(
-            &Error::InvalidKind(Default::default()).to_string(),
-            "The provided sequence was not valid DNA"
-        );
-        assert_eq!(
-            &Error::InvalidKind(Default::default()).to_string(),
-            "The provided sequence was not valid RNA"
-        );
-        assert_eq!(
-            &Error::InvalidKind(Default::default()).to_string(),
-            "The provided sequence was not valid Protein"
-        );
+        // FIXME: These need replacing!
+        // assert_eq!(
+        //     &Error::InvalidKind(Default::default()).to_string(),
+        //     "The provided sequence was not valid DNA"
+        // );
+        // assert_eq!(
+        //     &Error::InvalidKind(Default::default()).to_string(),
+        //     "The provided sequence was not valid RNA"
+        // );
+        // assert_eq!(
+        //     &Error::InvalidKind(Default::default()).to_string(),
+        //     "The provided sequence was not valid Protein"
+        // );
         assert_eq!(
             &Error::RevComp(Kind::Protein).to_string(),
             "Cannot reverse complement Protein"
