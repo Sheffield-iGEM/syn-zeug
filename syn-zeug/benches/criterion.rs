@@ -5,30 +5,43 @@ use pprof::criterion::{Output, PProfProfiler};
 use std::time::Duration;
 use syn_zeug::seq::{Kind, Seq};
 
+// TODO: Split this into `new_worst`, `new_best`, and `new_null` and try to use
+// `bench_time_complexity`
 fn new(c: &mut Criterion) {
     let data = utils::load_bench_data("ambiguous_seq.txt");
 
     let mut group = c.benchmark_group("new");
     for p in 0..=6 {
         let data = data.repeat(2_usize.pow(p));
-        // TODO: Yuck?
+        let size = data.len();
+
         let mut best = data.clone();
-        best.push(b'A');
+        best[size - 1] = b'A';
         let mut worst = data.clone();
-        worst.push(b'X');
-        let size = data.len() as u64;
-        // group.measurement_time(Duration::from_secs(10));
-        group.throughput(Throughput::Bytes(size));
+        worst[size - 1] = b'X';
+        let mut null = data.clone();
+        null[0] = b'J';
+
+        group.measurement_time(Duration::from_secs(10));
+        group.throughput(Throughput::Bytes(size as u64));
+
         group.bench_with_input(BenchmarkId::new("old_best", size), &best, |b, data| {
             b.iter(|| Seq::new_old(data));
         });
         group.bench_with_input(BenchmarkId::new("old_worst", size), &worst, |b, data| {
             b.iter(|| Seq::new_old(data));
         });
+        group.bench_with_input(BenchmarkId::new("old_null", size), &null, |b, data| {
+            b.iter(|| Seq::new_old(data));
+        });
+
         group.bench_with_input(BenchmarkId::new("new_best", size), &best, |b, data| {
             b.iter(|| Seq::new(data));
         });
         group.bench_with_input(BenchmarkId::new("new_worst", size), &worst, |b, data| {
+            b.iter(|| Seq::new(data));
+        });
+        group.bench_with_input(BenchmarkId::new("new_null", size), &null, |b, data| {
             b.iter(|| Seq::new(data));
         });
     }
@@ -68,7 +81,7 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = new, //rev, count_elements, dna_to_rna, reverse_complement
+    targets = new, rev, count_elements, dna_to_rna, reverse_complement
 );
 criterion_main!(benches);
 

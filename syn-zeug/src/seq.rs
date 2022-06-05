@@ -80,57 +80,35 @@ impl Seq {
         kinds: impl AsRef<[Kind]>,
         alphabet: Alphabet,
     ) -> Result<Self, Error> {
-        // TODO: Audit `collect` and `clone` calls
+        let seq = seq.as_ref();
         let potential_kinds: Vec<_> = kinds
             .as_ref()
             .iter()
             .flat_map(|&k| iter::repeat(k).zip(Alphabet::iter().filter(|&a| a <= alphabet)))
             .filter(|ka| ALPHABETS.contains_key(ka))
             .collect();
-        let seq = seq.as_ref();
-        let mut potential_alphabets = potential_kinds.iter().map(|ka| (ka, &ALPHABETS[ka])).peekable();
-        // for &c in seq {
-        //     while let Some((_, a)) = potential_alphabets.peek() {
-        //         if a.symbols.contains(c as usize) {
-        //             break;
-        //         } else {
-        //             potential_alphabets.next();
-        //         }
-        //     }
-        // }
-        // if let Some((&(kind, alphabet), _)) = potential_alphabets.next() {
-        //     Ok(Self {
-        //         bytes: seq.to_vec(),
-        //         kind,
-        //         alphabet,
-        //     })
-        // } else {
-        //     Err(Error::InvalidKind(potential_kinds))
-        // }
-        // FIXME: Unwrap is giga stinky
-        if let Some((&(kind, alphabet), _)) = seq
+        let mut potential_alphabets = potential_kinds
             .iter()
-            .try_fold(potential_alphabets.next(), |mut ka, &c| {
-                // TODO: Maybe stable in 1.63? (https://github.com/rust-lang/rust/pull/94927)
-                // while let Some((_, a)) = ka && !a.symbols.contains(c) {
-                while let Some((_, a)) = ka {
-                    if !a.symbols.contains(c as usize) {
-                        ka = potential_alphabets.next()
-                    } else {
-                        return Some(ka);
-                    }
+            .map(|ka| (ka, &ALPHABETS[ka]))
+            .peekable();
+
+        'next_elem: for &c in seq {
+            while let Some((_, a)) = potential_alphabets.peek() {
+                if a.symbols.contains(c as usize) {
+                    continue 'next_elem;
                 }
-                None
-            })
-            .flatten()
-        {
+                potential_alphabets.next();
+            }
+            break;
+        }
+
+        if let Some((&(kind, alphabet), _)) = potential_alphabets.next() {
             Ok(Self {
                 bytes: seq.to_vec(),
                 kind,
                 alphabet,
             })
         } else {
-            // TODO: Is there a nicer solution using `iter::unzip`?
             Err(Error::InvalidKind(potential_kinds))
         }
     }

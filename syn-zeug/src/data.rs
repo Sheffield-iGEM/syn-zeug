@@ -7,7 +7,7 @@ use std::{
 // TODO: Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
-use crate::seq::{Kind, Alphabet};
+use crate::seq::{Alphabet, Kind};
 
 pub static ALPHABETS: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
