@@ -11,7 +11,7 @@ fn new_best(c: &mut Criterion) {
         "new_best",
         "ambiguous_seq.txt",
         |s| [s, b"A".to_vec()].concat(),
-        // TODO: Maybe someday the compiler will be clever enough to figure out `Seq::new` on it's
+        // NOTE: Maybe someday the compiler will be clever enough to figure out `Seq::new` on it's
         // own. I get an utterly archaic lifetime error if I don't wrap this in a useless closure
         |d| Seq::new(d),
     );

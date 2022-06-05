@@ -8,7 +8,7 @@ use crate::data::{ByteMap, ALPHABETS};
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
     InvalidConversion(Kind, Kind),
-    InvalidKind(Vec<(Kind, Alphabet)>),
+    InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
 }
 
@@ -24,9 +24,8 @@ pub enum Kind {
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
 )]
-// TODO: Reevaluate the names of things here...
 pub enum Alphabet {
-    Canonical, // TODO: Rename this `Default`?
+    Base,
     N,
     Iupac,
 }
@@ -38,6 +37,8 @@ pub struct Seq {
     alphabet: Alphabet,
 }
 
+// TODO: Add comments demarcating the different method sections (constructors, getters,
+// chainable tools, terminal tools, etc)
 impl Seq {
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
@@ -68,28 +69,51 @@ impl Seq {
                 });
             }
         }
-        Err(Error::InvalidKind(potential_kinds))
+        Err(Error::InvalidSeq(potential_kinds))
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
         Self::new_with_kind(&seq, [Kind::Dna, Kind::Rna, Kind::Protein], Alphabet::Iupac)
     }
 
-    // TODO: Implement `dna_n` and `dna_iupac`
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, [Kind::Dna], Alphabet::Canonical)
+        Self::new_with_kind(seq, [Kind::Dna], Alphabet::Base)
+    }
+
+    pub fn dna_n(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind(seq, [Kind::Dna], Alphabet::N)
+    }
+
+    pub fn dna_iupac(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind(seq, [Kind::Dna], Alphabet::Iupac)
     }
 
     pub fn rna(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, [Kind::Rna], Alphabet::Canonical)
+        Self::new_with_kind(seq, [Kind::Rna], Alphabet::Base)
+    }
+
+    pub fn rna_n(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind(seq, [Kind::Rna], Alphabet::N)
+    }
+
+    pub fn rna_iupac(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind(seq, [Kind::Rna], Alphabet::Iupac)
     }
 
     pub fn protein(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(seq, [Kind::Protein], Alphabet::Canonical)
+        Self::new_with_kind(seq, [Kind::Protein], Alphabet::Base)
+    }
+
+    pub fn protein_iupac(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind(seq, [Kind::Protein], Alphabet::Iupac)
     }
 
     pub fn kind(&self) -> Kind {
         self.kind
+    }
+
+    pub fn alphabet(&self) -> Alphabet {
+        self.alphabet
     }
 
     pub fn len(&self) -> usize {
@@ -132,7 +156,6 @@ impl Seq {
     pub fn convert(&self, kind: Kind) -> Result<Self, Error> {
         match (self.kind, kind) {
             (from, to) if from == to => Ok(self.clone()),
-            // TODO: Is this IUPAC compatible?
             (Kind::Dna, Kind::Rna) => Ok(Self {
                 bytes: self
                     .bytes
@@ -151,7 +174,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
-            Error::InvalidKind(kind) => write!(f, "The provided sequence was not valid {kind:?}")?,
+            Error::InvalidSeq(kind) => write!(f, "The provided sequence was not valid {kind:?}")?,
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
         }
         Ok(())
@@ -208,14 +231,14 @@ mod tests {
         let protein = Seq::new("MAMAPUTEINSTRINX");
         assert_eq!(
             protein,
-            Err(Error::InvalidKind(vec![
-                (Kind::Dna, Alphabet::Canonical),
+            Err(Error::InvalidSeq(vec![
+                (Kind::Dna, Alphabet::Base),
                 (Kind::Dna, Alphabet::N),
                 (Kind::Dna, Alphabet::Iupac),
-                (Kind::Rna, Alphabet::Canonical),
+                (Kind::Rna, Alphabet::Base),
                 (Kind::Rna, Alphabet::N),
                 (Kind::Rna, Alphabet::Iupac),
-                (Kind::Protein, Alphabet::Canonical),
+                (Kind::Protein, Alphabet::Base),
                 (Kind::Protein, Alphabet::Iupac)
             ]))
         );
@@ -233,7 +256,7 @@ mod tests {
         let dna = Seq::dna("AGCTTTXCATTCTGACNGCA");
         assert_eq!(
             dna,
-            Err(Error::InvalidKind(vec![(Kind::Dna, Alphabet::Canonical)]))
+            Err(Error::InvalidSeq(vec![(Kind::Dna, Alphabet::Base)]))
         );
     }
 
@@ -256,7 +279,7 @@ mod tests {
         let rna = Seq::rna("AGCUUTUCAUUCUGACTGCA");
         assert_eq!(
             rna,
-            Err(Error::InvalidKind(vec![(Kind::Rna, Alphabet::Canonical)]))
+            Err(Error::InvalidSeq(vec![(Kind::Rna, Alphabet::Base)]))
         );
     }
 
@@ -279,10 +302,7 @@ mod tests {
         let protein = Seq::protein("MAMAPUTEINSTRINX");
         assert_eq!(
             protein,
-            Err(Error::InvalidKind(vec![(
-                Kind::Protein,
-                Alphabet::Canonical
-            )]))
+            Err(Error::InvalidSeq(vec![(Kind::Protein, Alphabet::Base)]))
         );
     }
 

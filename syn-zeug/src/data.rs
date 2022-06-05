@@ -11,15 +11,15 @@ use crate::seq::{Alphabet, Kind};
 
 pub static ALPHABETS: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
-    m.insert((Kind::Dna, Alphabet::Canonical), dna::alphabet());
+    m.insert((Kind::Dna, Alphabet::Base), dna::alphabet());
     m.insert((Kind::Dna, Alphabet::N), dna::n_alphabet());
     m.insert((Kind::Dna, Alphabet::Iupac), dna::iupac_alphabet());
 
-    m.insert((Kind::Rna, Alphabet::Canonical), rna::alphabet());
+    m.insert((Kind::Rna, Alphabet::Base), rna::alphabet());
     m.insert((Kind::Rna, Alphabet::N), rna::n_alphabet());
     m.insert((Kind::Rna, Alphabet::Iupac), rna::iupac_alphabet());
 
-    m.insert((Kind::Protein, Alphabet::Canonical), protein::alphabet());
+    m.insert((Kind::Protein, Alphabet::Base), protein::alphabet());
     m.insert((Kind::Protein, Alphabet::Iupac), protein::iupac_alphabet());
     m
 });
