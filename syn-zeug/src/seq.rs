@@ -21,10 +21,10 @@ pub enum Kind {
     Protein,
 }
 
-// TODO: Use strum to iterate over this!
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
 )]
+// TODO: Reevaluate the names of things here...
 pub enum Alphabet {
     Canonical, // TODO: Rename this `Default`?
     N,
@@ -39,40 +39,6 @@ pub struct Seq {
 }
 
 impl Seq {
-    // TODO: Rename and clean up this rubbish...
-    pub fn new_with_kind_old(
-        seq: impl AsRef<[u8]>,
-        kinds: impl AsRef<[Kind]>,
-        alphabet: Alphabet,
-    ) -> Result<Self, Error> {
-        // TODO: Audit `collect` and `clone` calls
-        let potential_alphabets: Vec<_> = Alphabet::iter().filter(|&a| a <= alphabet).collect();
-        // TODO: Try optimising this to not zip things, just producing a Vec<(Kind, Alphabet)>
-        // That would mean no unzipping on error, but also might slow things down by checking
-        // ALPHABETS twice? Once for the filter contains_key and again for the actual getting
-        let potential_kinds: Vec<_> = kinds
-            .as_ref()
-            .iter()
-            .flat_map(|&k| iter::repeat(k).zip(potential_alphabets.iter().copied()))
-            .filter_map(|ka| ALPHABETS.get(&ka).map(|a| (ka, a)))
-            .collect();
-        let seq = seq.as_ref();
-        // TODO: Need to optimise this with a single-pass fold approach (instead of `find`
-        // which will scan parts of the sequence several times for types like IUPAC protein)
-        if let Some(&((kind, alphabet), _)) = potential_kinds.iter().find(|(_, s)| s.is_word(seq)) {
-            Ok(Self {
-                bytes: seq.to_vec(),
-                kind,
-                alphabet,
-            })
-        } else {
-            // TODO: Is there a nicer solution using `iter::unzip`?
-            Err(Error::InvalidKind(
-                potential_kinds.iter().map(|&(k, _)| k).collect(),
-            ))
-        }
-    }
-
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -105,12 +71,8 @@ impl Seq {
         Err(Error::InvalidKind(potential_kinds))
     }
 
-    pub fn new_old(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind_old(&seq, Kind::iter().collect::<Vec<_>>(), Alphabet::Iupac)
-    }
-
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind(&seq, Kind::iter().collect::<Vec<_>>(), Alphabet::Iupac)
+        Self::new_with_kind(&seq, [Kind::Dna, Kind::Rna, Kind::Protein], Alphabet::Iupac)
     }
 
     // TODO: Implement `dna_n` and `dna_iupac`
