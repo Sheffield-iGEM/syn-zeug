@@ -73,8 +73,6 @@ impl Seq {
         }
     }
 
-    // TODO: Also needs benchmarking that shows tests sequences where the first element isn't part
-    // of any alphabet. That should be O(1) because the rest of the input is ignored!
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -87,30 +85,24 @@ impl Seq {
             .flat_map(|&k| iter::repeat(k).zip(Alphabet::iter().filter(|&a| a <= alphabet)))
             .filter(|ka| ALPHABETS.contains_key(ka))
             .collect();
-        let mut potential_alphabets = potential_kinds
-            .iter()
-            .map(|ka| (ka, &ALPHABETS[ka]))
-            .peekable();
+        let potential_alphabets = potential_kinds.iter().map(|ka| (ka, &ALPHABETS[ka]));
 
-        'next_elem: for &c in seq {
-            while let Some((_, a)) = potential_alphabets.peek() {
-                if a.symbols.contains(c as usize) {
-                    continue 'next_elem;
-                }
-                potential_alphabets.next();
+        let mut i = 0;
+        for (&(kind, alphabet), a) in potential_alphabets {
+            if let Some(n) = seq[i..]
+                .iter()
+                .position(|&c| !a.symbols.contains(c as usize))
+            {
+                i += n;
+            } else {
+                return Ok(Self {
+                    bytes: seq.to_vec(),
+                    kind,
+                    alphabet,
+                });
             }
-            break;
         }
-
-        if let Some((&(kind, alphabet), _)) = potential_alphabets.next() {
-            Ok(Self {
-                bytes: seq.to_vec(),
-                kind,
-                alphabet,
-            })
-        } else {
-            Err(Error::InvalidKind(potential_kinds))
-        }
+        Err(Error::InvalidKind(potential_kinds))
     }
 
     pub fn new_old(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
