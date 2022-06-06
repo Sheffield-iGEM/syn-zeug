@@ -201,6 +201,10 @@ impl fmt::Display for Seq {
 }
 
 // TODO: Need to add IUPAC tests for DNA, RNA, and Protein
+// Add some cases that are ambiguous. I should probably try to check all of the normal alphabets
+// first, then go on to try the N-containing and IUPAC ones. Well, maybe that needs a little bit
+// more thought... Regardless, the behaviour in all ambiguous cases should be explicitly covered by
+// these tests
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -208,22 +212,65 @@ mod tests {
     #[test]
     fn magic_dna_sequence() {
         let dna = Seq::new("AGCTTTTCATTCTGACTGCA");
-        assert!(dna.is_ok());
-        assert_eq!(dna.unwrap().kind(), Kind::Dna);
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::Base);
+    }
+
+    #[test]
+    fn magic_dna_n_sequence() {
+        let dna = Seq::new("AGCTTNTCATTCTNNCTGCA");
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::N);
+    }
+
+    #[test]
+    fn magic_dna_iupac_sequence() {
+        let dna = Seq::new("ABCTTNTCASTCTNNCTGWA");
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::Iupac);
     }
 
     #[test]
     fn magic_rna_sequence() {
         let rna = Seq::new("AGCUUUUCAUUCUGACUGCA");
-        assert!(rna.is_ok());
-        assert_eq!(rna.unwrap().kind(), Kind::Rna);
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Base);
+    }
+
+    #[test]
+    fn magic_rna_n_sequence() {
+        let rna = Seq::new("AGCUNNUCAUUCUGANUGCA");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::N);
+    }
+
+    #[test]
+    fn magic_rna_iupac_sequence() {
+        let rna = Seq::new("ADHUNNUCAUUVUGANUKCA");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Iupac);
     }
 
     #[test]
     fn magic_protein_sequence() {
         let protein = Seq::new("MAMAPRTEINSTRING");
-        assert!(protein.is_ok());
-        assert_eq!(protein.unwrap().kind(), Kind::Protein);
+        let protein = protein.unwrap();
+        assert_eq!(protein.kind(), Kind::Protein);
+        assert_eq!(protein.alphabet(), Alphabet::Base);
+    }
+
+    #[test]
+    fn magic_protein_iupac_sequence() {
+        let protein = Seq::new("MAMXPRTEIBSTRINZ");
+        let protein = protein.unwrap();
+        assert_eq!(protein.kind(), Kind::Protein);
+        assert_eq!(protein.alphabet(), Alphabet::Iupac);
     }
 
     #[test]
