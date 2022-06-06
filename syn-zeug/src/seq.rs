@@ -52,7 +52,14 @@ impl Seq {
             .flat_map(|&k| iter::repeat(k).zip(Alphabet::iter().filter(|&a| a <= alphabet)))
             .filter(|ka| ALPHABETS.contains_key(ka))
             .collect();
-        let potential_alphabets = potential_kinds.iter().map(|ka| (ka, &ALPHABETS[ka]));
+        // FIXME: Need to sort this so that DNA and RNA Base and N come before protein Base, then
+        // the IUPAC stuff follows DNA, RNA, Protein
+        // let potential_kinds: Vec<_> = Alphabet::iter()
+        //     .filter(|&a| a <= alphabet)
+        //     .flat_map(|a| kinds.as_ref().iter().copied().zip(iter::repeat(a)))
+        //     .filter(|ka| ALPHABETS.contains_key(ka))
+        //     .collect();
+        let potential_alphabets = dbg!(&potential_kinds).iter().map(|ka| (ka, &ALPHABETS[ka]));
 
         let mut i = 0;
         for (&(kind, alphabet), a) in potential_alphabets {
@@ -271,6 +278,15 @@ mod tests {
         let protein = protein.unwrap();
         assert_eq!(protein.kind(), Kind::Protein);
         assert_eq!(protein.alphabet(), Alphabet::Iupac);
+    }
+
+    // TODO: Maybe eventually cull this or clean it up / have others like it
+    #[test]
+    fn magic_tricky_rna_iupac_sequence() {
+        let rna = Seq::new("ADHANNCCAGGVAGANCKCAU");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Iupac);
     }
 
     #[test]
