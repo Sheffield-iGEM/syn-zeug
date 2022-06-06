@@ -5,6 +5,48 @@ use pprof::criterion::{Output, PProfProfiler};
 use std::{fmt::Debug, time::Duration};
 use syn_zeug::seq::{Kind, Seq};
 
+fn new(c: &mut Criterion) {
+    let data = utils::load_bench_data("ambiguous_seq.txt");
+
+    let mut group = c.benchmark_group("new");
+    for p in 5..=6 {
+        let data = data.repeat(2_usize.pow(p));
+        let size = data.len();
+
+        let mut best = data.clone();
+        best[size - 1] = b'A';
+        let mut worst = data.clone();
+        worst[size - 1] = b'X';
+        let mut null = data.clone();
+        null[0] = b'J';
+
+        // group.measurement_time(Duration::from_secs(10));
+        group.throughput(Throughput::Bytes(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("old_best", size), &best, |b, data| {
+            b.iter(|| Seq::new_old(data));
+        });
+        group.bench_with_input(BenchmarkId::new("old_worst", size), &worst, |b, data| {
+            b.iter(|| Seq::new_old(data));
+        });
+        // group.bench_with_input(BenchmarkId::new("old_null", size), &null, |b, data| {
+        //     b.iter(|| Seq::new_old(data));
+        // });
+
+        group.bench_with_input(BenchmarkId::new("new_best", size), &best, |b, data| {
+            b.iter(|| Seq::new(data));
+        });
+        group.bench_with_input(BenchmarkId::new("new_worst", size), &worst, |b, data| {
+            b.iter(|| Seq::new(data));
+        });
+        // group.bench_with_input(BenchmarkId::new("new_null", size), &null, |b, data| {
+        //     b.iter(|| Seq::new(data));
+        // });
+    }
+    group.finish();
+}
+
+// TODO: None of this nonsense, just find some real-world data and optimise for that...
 fn new_best(c: &mut Criterion) {
     bench_time_complexity(
         c,
@@ -70,7 +112,7 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = new_best, new_worst, new_null, rev, count_elements, dna_to_rna, reverse_complement
+    targets = new, //new_best, new_worst, new_null, rev, count_elements, dna_to_rna, reverse_complement
 );
 criterion_main!(benches);
 

@@ -40,6 +40,39 @@ pub struct Seq {
 // TODO: Add comments demarcating the different method sections (constructors, getters,
 // chainable tools, terminal tools, etc)
 impl Seq {
+    pub fn new_with_kind_old(
+        seq: impl AsRef<[u8]>,
+        kinds: impl AsRef<[Kind]>,
+        alphabet: Alphabet,
+    ) -> Result<Self, Error> {
+        // TODO: Audit `collect` and `clone` calls
+        let potential_alphabets: Vec<_> = Alphabet::iter().filter(|&a| a <= alphabet).collect();
+        // TODO: Try optimising this to not zip things, just producing a Vec<(Kind, Alphabet)>
+        // That would mean no unzipping on error, but also might slow things down by checking
+        // ALPHABETS twice? Once for the filter contains_key and again for the actual getting
+        let potential_kinds: Vec<_> = kinds
+            .as_ref()
+            .iter()
+            .flat_map(|&k| iter::repeat(k).zip(potential_alphabets.iter().copied()))
+            .filter_map(|ka| ALPHABETS.get(&ka).map(|a| (ka, a)))
+            .collect();
+        let seq = seq.as_ref();
+        // TODO: Need to optimise this with a single-pass fold approach (instead of `find`
+        // which will scan parts of the sequence several times for types like IUPAC protein)
+        if let Some(&((kind, alphabet), _)) = potential_kinds.iter().find(|(_, s)| s.is_word(seq)) {
+            Ok(Self {
+                bytes: seq.to_vec(),
+                kind,
+                alphabet,
+            })
+        } else {
+            // TODO: Is there a nicer solution using `iter::unzip`?
+            Err(Error::InvalidSeq(
+                potential_kinds.iter().map(|&(k, _)| k).collect(),
+            ))
+        }
+    }
+
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -59,24 +92,20 @@ impl Seq {
         //     .flat_map(|a| kinds.as_ref().iter().copied().zip(iter::repeat(a)))
         //     .filter(|ka| ALPHABETS.contains_key(ka))
         //     .collect();
-        let potential_alphabets = dbg!(&potential_kinds).iter().map(|ka| (ka, &ALPHABETS[ka]));
 
-        let mut i = 0;
-        for (&(kind, alphabet), a) in potential_alphabets {
-            if let Some(n) = seq[i..]
-                .iter()
-                .position(|&c| !a.symbols.contains(c as usize))
-            {
-                i += n;
-            } else {
-                return Ok(Self {
-                    bytes: seq.to_vec(),
-                    kind,
-                    alphabet,
-                });
-            }
+        if let Some(&(kind, alphabet)) = potential_kinds.iter().find(|ka| ALPHABETS[ka].is_word(seq)) {
+            Ok(Self {
+                bytes: seq.to_vec(),
+                kind,
+                alphabet,
+            })
+        } else {
+            Err(Error::InvalidSeq(potential_kinds))
         }
-        Err(Error::InvalidSeq(potential_kinds))
+    }
+
+    pub fn new_old(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
+        Self::new_with_kind_old(&seq, [Kind::Dna, Kind::Rna, Kind::Protein], Alphabet::Iupac)
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
@@ -281,8 +310,8 @@ mod tests {
     }
 
     // TODO: Maybe eventually cull this or clean it up / have others like it
+    // TODO: Don't forget to look for lost dbg!()'s
     #[test]
-    #[ignore]
     fn magic_tricky_rna_iupac_sequence() {
         let rna = Seq::new("ADHANNCCAGGVAGANCKCAU");
         let rna = rna.unwrap();
@@ -293,25 +322,7 @@ mod tests {
     #[test]
     fn magic_tricky_rna_sequence() {
         let rna = Seq::new("AGCTTTTCATTCTGACTGCAU");
-        let rna = rna.unwrap();
-        assert_eq!(rna.kind(), Kind::Rna);
-        assert_eq!(rna.alphabet(), Alphabet::Base);
-    }
-
-    #[test]
-    #[ignore]
-    fn is_it_possible() {
-        let dna_iupac = bio::alphabets::dna::iupac_alphabet().symbols;
-        let dna = bio::alphabets::dna::alphabet().symbols;
-        let rna = bio::alphabets::rna::alphabet().symbols;
-        assert!(dna_iupac.is_superset(&dna_iupac));
-        assert!(dna.is_superset(&dna));
-        assert!(rna.is_superset(&rna));
-
-        assert!(dna_iupac.is_superset(&dna));
-        assert!(!dna.is_superset(&dna_iupac));
-
-        assert!(dna.is_superset(&rna) || rna.is_superset(&dna));
+        assert!(rna.is_err());
     }
 
     #[test]
