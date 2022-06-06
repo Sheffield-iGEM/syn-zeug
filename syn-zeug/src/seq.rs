@@ -282,11 +282,36 @@ mod tests {
 
     // TODO: Maybe eventually cull this or clean it up / have others like it
     #[test]
+    #[ignore]
     fn magic_tricky_rna_iupac_sequence() {
         let rna = Seq::new("ADHANNCCAGGVAGANCKCAU");
         let rna = rna.unwrap();
         assert_eq!(rna.kind(), Kind::Rna);
         assert_eq!(rna.alphabet(), Alphabet::Iupac);
+    }
+
+    #[test]
+    fn magic_tricky_rna_sequence() {
+        let rna = Seq::new("AGCTTTTCATTCTGACTGCAU");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Base);
+    }
+
+    #[test]
+    #[ignore]
+    fn is_it_possible() {
+        let dna_iupac = bio::alphabets::dna::iupac_alphabet().symbols;
+        let dna = bio::alphabets::dna::alphabet().symbols;
+        let rna = bio::alphabets::rna::alphabet().symbols;
+        assert!(dna_iupac.is_superset(&dna_iupac));
+        assert!(dna.is_superset(&dna));
+        assert!(rna.is_superset(&rna));
+
+        assert!(dna_iupac.is_superset(&dna));
+        assert!(!dna.is_superset(&dna_iupac));
+
+        assert!(dna.is_superset(&rna) || rna.is_superset(&dna));
     }
 
     #[test]
