@@ -40,39 +40,7 @@ pub struct Seq {
 // TODO: Add comments demarcating the different method sections (constructors, getters,
 // chainable tools, terminal tools, etc)
 impl Seq {
-    pub fn new_with_kind_old(
-        seq: impl AsRef<[u8]>,
-        kinds: impl AsRef<[Kind]>,
-        alphabet: Alphabet,
-    ) -> Result<Self, Error> {
-        // TODO: Audit `collect` and `clone` calls
-        let potential_alphabets: Vec<_> = Alphabet::iter().filter(|&a| a <= alphabet).collect();
-        // TODO: Try optimising this to not zip things, just producing a Vec<(Kind, Alphabet)>
-        // That would mean no unzipping on error, but also might slow things down by checking
-        // ALPHABETS twice? Once for the filter contains_key and again for the actual getting
-        let potential_kinds: Vec<_> = kinds
-            .as_ref()
-            .iter()
-            .flat_map(|&k| iter::repeat(k).zip(potential_alphabets.iter().copied()))
-            .filter_map(|ka| ALPHABETS.get(&ka).map(|a| (ka, a)))
-            .collect();
-        let seq = seq.as_ref();
-        // TODO: Need to optimise this with a single-pass fold approach (instead of `find`
-        // which will scan parts of the sequence several times for types like IUPAC protein)
-        if let Some(&((kind, alphabet), _)) = potential_kinds.iter().find(|(_, s)| s.is_word(seq)) {
-            Ok(Self {
-                bytes: seq.to_vec(),
-                kind,
-                alphabet,
-            })
-        } else {
-            // TODO: Is there a nicer solution using `iter::unzip`?
-            Err(Error::InvalidSeq(
-                potential_kinds.iter().map(|&(k, _)| k).collect(),
-            ))
-        }
-    }
-
+    // TODO: Functional, but a bit ugly. Needs some TLC
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -92,20 +60,36 @@ impl Seq {
         //     .flat_map(|a| kinds.as_ref().iter().copied().zip(iter::repeat(a)))
         //     .filter(|ka| ALPHABETS.contains_key(ka))
         //     .collect();
+        let mut candidates: Vec<_> = potential_kinds
+            .iter()
+            .map(|ka| (ka, &ALPHABETS[ka]))
+            .collect();
 
-        if let Some(&(kind, alphabet)) = potential_kinds.iter().find(|ka| ALPHABETS[ka].is_word(seq)) {
-            Ok(Self {
-                bytes: seq.to_vec(),
-                kind,
-                alphabet,
-            })
-        } else {
-            Err(Error::InvalidSeq(potential_kinds))
+        // NOTE: Could perhaps be further optimised, as it will rescan all of the preceeding
+        // sequence every time an alphabet fails to validate, but it does make sure that the next
+        // alphabet tried at least contains the character responsible for the last invalidation. I
+        // tried a single-pass approach, but that meant checking each character against every still
+        // possible alphabet. That ultimately resulted in a large number of comparisons even if
+        // the first alphabet was the correct one, so the performance of the best case was only a
+        // little better than the performance of the worst case when rescanning. This approach
+        // tries to maximised the information gained by a mismatch (filtering candidates then), but
+        // is optimisic and keeps the best-case as fast as possible
+        while let Some((&(kind, alphabet), a)) = candidates.get(0) {
+            if let Some(c) = seq
+                .iter()
+                .copied()
+                .find(|&c| !a.symbols.contains(c as usize))
+            {
+                candidates.retain(|(_, a)| a.symbols.contains(c as usize));
+            } else {
+                return Ok(Self {
+                    bytes: seq.to_vec(),
+                    kind,
+                    alphabet,
+                });
+            }
         }
-    }
-
-    pub fn new_old(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
-        Self::new_with_kind_old(&seq, [Kind::Dna, Kind::Rna, Kind::Protein], Alphabet::Iupac)
+        Err(Error::InvalidSeq(potential_kinds))
     }
 
     pub fn new(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
