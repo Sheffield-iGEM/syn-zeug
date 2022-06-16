@@ -1,9 +1,8 @@
 use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
-use std::{fmt, iter, str::from_utf8};
-use strum::{EnumIter, IntoEnumIterator};
+use std::{fmt, str::from_utf8};
 
-use crate::data::{ByteMap, ALPHABETS};
+use crate::data::{ByteMap, ALPHABETS, ALPHABET_MAP};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
@@ -12,18 +11,14 @@ pub enum Error {
     RevComp(Kind),
 }
 
-#[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
-)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Kind {
     Dna,
     Rna,
     Protein,
 }
 
-#[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, EnumIter,
-)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Alphabet {
     Base,
     N,
@@ -47,22 +42,15 @@ impl Seq {
         alphabet: Alphabet,
     ) -> Result<Self, Error> {
         let seq = seq.as_ref();
-        let potential_kinds: Vec<_> = kinds
-            .as_ref()
+        let kinds = kinds.as_ref();
+        let potential_kinds: Vec<_> = ALPHABETS
             .iter()
-            .flat_map(|&k| iter::repeat(k).zip(Alphabet::iter().filter(|&a| a <= alphabet)))
-            .filter(|ka| ALPHABETS.contains_key(ka))
+            .copied()
+            .filter(|(k, a)| kinds.contains(k) && a <= &alphabet)
             .collect();
-        // FIXME: Need to sort this so that DNA and RNA Base and N come before protein Base, then
-        // the IUPAC stuff follows DNA, RNA, Protein
-        // let potential_kinds: Vec<_> = Alphabet::iter()
-        //     .filter(|&a| a <= alphabet)
-        //     .flat_map(|a| kinds.as_ref().iter().copied().zip(iter::repeat(a)))
-        //     .filter(|ka| ALPHABETS.contains_key(ka))
-        //     .collect();
         let mut candidates: Vec<_> = potential_kinds
             .iter()
-            .map(|ka| (ka, &ALPHABETS[ka]))
+            .map(|ka| (ka, &ALPHABET_MAP[ka]))
             .collect();
 
         // NOTE: Could perhaps be further optimised, as it will rescan all of the preceeding
@@ -316,15 +304,30 @@ mod tests {
             protein,
             Err(Error::InvalidSeq(vec![
                 (Kind::Dna, Alphabet::Base),
-                (Kind::Dna, Alphabet::N),
-                (Kind::Dna, Alphabet::Iupac),
                 (Kind::Rna, Alphabet::Base),
+                (Kind::Dna, Alphabet::N),
                 (Kind::Rna, Alphabet::N),
-                (Kind::Rna, Alphabet::Iupac),
                 (Kind::Protein, Alphabet::Base),
+                (Kind::Dna, Alphabet::Iupac),
+                (Kind::Rna, Alphabet::Iupac),
                 (Kind::Protein, Alphabet::Iupac)
             ]))
         );
+    }
+
+    #[test]
+    fn magic_all_alphabets_reachable() {
+        // NOTE: The priority list of alphabets that the magic constructor searches through must be
+        // ordered in a way that makes it possible (with the right input) to reach all of the
+        // `Kind` + `Alphabet` combinations. This test is here so that, even if the order in which
+        // alphabets are tried changes in the future, this property holds
+        for (i, curr) in ALPHABETS.iter().enumerate() {
+            assert!(&ALPHABETS[..i].iter().all(|past| {
+                let past = &ALPHABET_MAP[past].symbols;
+                let curr = &ALPHABET_MAP[curr].symbols;
+                !past.is_superset(curr)
+            }));
+        }
     }
 
     #[test]

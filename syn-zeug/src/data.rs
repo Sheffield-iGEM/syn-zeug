@@ -9,7 +9,18 @@ use once_cell::sync::Lazy;
 
 use crate::seq::{Alphabet, Kind};
 
-pub static ALPHABETS: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> = Lazy::new(|| {
+pub const ALPHABETS: [(Kind, Alphabet); 8] = [
+    (Kind::Dna, Alphabet::Base),
+    (Kind::Rna, Alphabet::Base),
+    (Kind::Dna, Alphabet::N),
+    (Kind::Rna, Alphabet::N),
+    (Kind::Protein, Alphabet::Base),
+    (Kind::Dna, Alphabet::Iupac),
+    (Kind::Rna, Alphabet::Iupac),
+    (Kind::Protein, Alphabet::Iupac),
+];
+
+pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> = Lazy::new(|| {
     let mut m = HashMap::new();
     m.insert((Kind::Dna, Alphabet::Base), dna::alphabet());
     m.insert((Kind::Dna, Alphabet::N), dna::n_alphabet());
