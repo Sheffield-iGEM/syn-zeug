@@ -1,6 +1,6 @@
 use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
-use std::{fmt, str::from_utf8};
+use std::{fmt, str};
 
 use crate::data::{ByteMap, ALPHABETS, ALPHABET_MAP};
 
@@ -35,7 +35,6 @@ pub struct Seq {
 // TODO: Add comments demarcating the different method sections (constructors, getters,
 // chainable tools, terminal tools, etc)
 impl Seq {
-    // TODO: Functional, but a bit ugly. Needs some TLC
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -43,6 +42,7 @@ impl Seq {
     ) -> Result<Self, Error> {
         let seq = seq.as_ref();
         let kinds = kinds.as_ref();
+
         let potential_kinds: Vec<_> = ALPHABETS
             .iter()
             .copied()
@@ -53,15 +53,12 @@ impl Seq {
             .map(|ka| (ka, &ALPHABET_MAP[ka]))
             .collect();
 
-        // NOTE: Could perhaps be further optimised, as it will rescan all of the preceeding
-        // sequence every time an alphabet fails to validate, but it does make sure that the next
-        // alphabet tried at least contains the character responsible for the last invalidation. I
-        // tried a single-pass approach, but that meant checking each character against every still
-        // possible alphabet. That ultimately resulted in a large number of comparisons even if
-        // the first alphabet was the correct one, so the performance of the best case was only a
-        // little better than the performance of the worst case when rescanning. This approach
-        // tries to maximised the information gained by a mismatch (filtering candidates then), but
-        // is optimisic and keeps the best-case as fast as possible
+        // OPTIMISATION: This algorithm will rescan large regions of sequence if the first
+        // candidate fails to validate, but the best case (it is the first alphabet — or even the
+        // second or third) outperforms a single-pass approach (which involves more comparisons per
+        // sequence element). To ameliorate the performance hit from rescanning, the mismatch
+        // character is used to filter the candidates before a rescan, ensuring that the next
+        // attempted candidate won't get stuck on the same character.
         while let Some((&(kind, alphabet), a)) = candidates.get(0) {
             if let Some(c) = seq
                 .iter()
@@ -77,6 +74,7 @@ impl Seq {
                 });
             }
         }
+
         Err(Error::InvalidSeq(potential_kinds))
     }
 
@@ -204,18 +202,15 @@ impl fmt::Display for Kind {
 
 impl fmt::Display for Seq {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(from_utf8(&self.bytes).expect("Seq did not contain valid UTF-8"))
+        f.write_str(str::from_utf8(&self.bytes).expect("Seq did not contain valid UTF-8"))
     }
 }
 
-// TODO: Need to add IUPAC tests for DNA, RNA, and Protein
-// Add some cases that are ambiguous. I should probably try to check all of the normal alphabets
-// first, then go on to try the N-containing and IUPAC ones. Well, maybe that needs a little bit
-// more thought... Regardless, the behaviour in all ambiguous cases should be explicitly covered by
-// these tests
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ===== "Magic" Sequence Constructor Tests (Typical Usage) ====================================
 
     #[test]
     fn magic_dna_sequence() {
@@ -281,8 +276,8 @@ mod tests {
         assert_eq!(protein.alphabet(), Alphabet::Iupac);
     }
 
-    // TODO: Maybe eventually cull this or clean it up / have others like it
-    // TODO: Don't forget to look for lost dbg!()'s
+    // ===== "Magic" Sequence Constructor Tests (Edge Cases + Errors) ==============================
+
     #[test]
     fn magic_tricky_rna_iupac_sequence() {
         let rna = Seq::new("ADHANNCCAGGVAGANCKCAU");
@@ -330,11 +325,14 @@ mod tests {
         }
     }
 
+    // ===== Standard Sequence Constructor Tests (DNA) =============================================
+
     #[test]
     fn read_valid_dna_sequence() {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA");
-        assert!(dna.is_ok());
-        assert_eq!(dna.unwrap().kind(), Kind::Dna);
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::Base);
     }
 
     #[test]
@@ -347,17 +345,63 @@ mod tests {
     }
 
     #[test]
-    fn dna_to_string() -> Result<(), Error> {
-        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
-        assert_eq!(dna.to_string(), String::from("AGCTTTTCATTCTGACTGCA"));
-        Ok(())
+    fn read_valid_dna_n_sequence() {
+        let dna = Seq::dna_n("AGCTTNTCATTCTNNCTGCA");
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::N);
     }
+
+    #[test]
+    fn read_invalid_dna_n_sequence() {
+        let dna = Seq::dna_n("AGCUUNUCAUUCUNNCUGCA");
+        assert_eq!(
+            dna,
+            Err(Error::InvalidSeq(vec![
+                (Kind::Dna, Alphabet::Base),
+                (Kind::Dna, Alphabet::N)
+            ]))
+        );
+    }
+
+    #[test]
+    fn read_valid_dna_iupac_sequence() {
+        let dna = Seq::dna_iupac("ABCTTNTCASTCTNNCTGWA");
+        let dna = dna.unwrap();
+        assert_eq!(dna.kind(), Kind::Dna);
+        assert_eq!(dna.alphabet(), Alphabet::Iupac);
+    }
+
+    #[test]
+    fn read_invalid_dna_iupac_sequence() {
+        let dna = Seq::dna_iupac("ABCUUNUCASUCUNNCUGWA");
+        assert_eq!(
+            dna,
+            Err(Error::InvalidSeq(vec![
+                (Kind::Dna, Alphabet::Base),
+                (Kind::Dna, Alphabet::N),
+                (Kind::Dna, Alphabet::Iupac)
+            ]))
+        );
+    }
+
+    #[test]
+    fn read_valid_dna_downcasting() {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA");
+        let dna_n = Seq::dna_n("AGCTTTTCATTCTGACTGCA");
+        let dna_iupac = Seq::dna_iupac("AGCTTTTCATTCTGACTGCA");
+        assert_eq!(dna, dna_n);
+        assert_eq!(dna_n, dna_iupac);
+    }
+
+    // ===== Standard Sequence Constructor Tests (RNA) =============================================
 
     #[test]
     fn read_valid_rna_sequence() {
         let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA");
-        assert!(rna.is_ok());
-        assert_eq!(rna.unwrap().kind(), Kind::Rna);
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Base);
     }
 
     #[test]
@@ -370,17 +414,63 @@ mod tests {
     }
 
     #[test]
-    fn rna_to_string() -> Result<(), Error> {
-        let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
-        assert_eq!(rna.to_string(), String::from("AGCUUUUCAUUCUGACUGCA"));
-        Ok(())
+    fn read_valid_rna_n_sequence() {
+        let rna = Seq::rna_n("AGCUUNUCAUUCUNNCUGCA");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::N);
     }
+
+    #[test]
+    fn read_invalid_rna_n_sequence() {
+        let rna = Seq::rna_n("AGCTTNTCATTCTNNCTGCA");
+        assert_eq!(
+            rna,
+            Err(Error::InvalidSeq(vec![
+                (Kind::Rna, Alphabet::Base),
+                (Kind::Rna, Alphabet::N)
+            ]))
+        );
+    }
+
+    #[test]
+    fn read_valid_rna_iupac_sequence() {
+        let rna = Seq::rna_iupac("ABCUUNUCASUCUNNCUGWA");
+        let rna = rna.unwrap();
+        assert_eq!(rna.kind(), Kind::Rna);
+        assert_eq!(rna.alphabet(), Alphabet::Iupac);
+    }
+
+    #[test]
+    fn read_invalid_rna_iupac_sequence() {
+        let rna = Seq::rna_iupac("ABCTTNTCASTCTNNCTGWA");
+        assert_eq!(
+            rna,
+            Err(Error::InvalidSeq(vec![
+                (Kind::Rna, Alphabet::Base),
+                (Kind::Rna, Alphabet::N),
+                (Kind::Rna, Alphabet::Iupac)
+            ]))
+        );
+    }
+
+    #[test]
+    fn read_valid_rna_downcasting() {
+        let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA");
+        let rna_n = Seq::rna_n("AGCUUUUCAUUCUGACUGCA");
+        let rna_iupac = Seq::rna_iupac("AGCUUUUCAUUCUGACUGCA");
+        assert_eq!(rna, rna_n);
+        assert_eq!(rna_n, rna_iupac);
+    }
+
+    // ===== Standard Sequence Constructor Tests (Protein) =========================================
 
     #[test]
     fn read_valid_protein_sequence() {
         let protein = Seq::protein("MAMAPRTEINSTRING");
-        assert!(protein.is_ok());
-        assert_eq!(protein.unwrap().kind(), Kind::Protein);
+        let protein = protein.unwrap();
+        assert_eq!(protein.kind(), Kind::Protein);
+        assert_eq!(protein.alphabet(), Alphabet::Base);
     }
 
     #[test]
@@ -393,11 +483,49 @@ mod tests {
     }
 
     #[test]
+    fn read_valid_protein_iupac_sequence() {
+        let protein_iupac = Seq::protein_iupac("MAMXPRTEIBSTRINZ");
+        let protein_iupac = protein_iupac.unwrap();
+        assert_eq!(protein_iupac.kind(), Kind::Protein);
+        assert_eq!(protein_iupac.alphabet(), Alphabet::Iupac);
+    }
+
+    #[test]
+    fn read_invalid_protein_iupac_sequence() {
+        let protein_iupac = Seq::protein_iupac("MAMXPUTEIBSTRINZ");
+        assert_eq!(
+            protein_iupac,
+            Err(Error::InvalidSeq(vec![
+                (Kind::Protein, Alphabet::Base),
+                (Kind::Protein, Alphabet::Iupac)
+            ]))
+        );
+    }
+
+    // ===== String Conversion Tests ===============================================================
+
+    #[test]
+    fn dna_to_string() -> Result<(), Error> {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
+        assert_eq!(dna.to_string(), String::from("AGCTTTTCATTCTGACTGCA"));
+        Ok(())
+    }
+
+    #[test]
+    fn rna_to_string() -> Result<(), Error> {
+        let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
+        assert_eq!(rna.to_string(), String::from("AGCUUUUCAUUCUGACUGCA"));
+        Ok(())
+    }
+
+    #[test]
     fn protein_to_string() -> Result<(), Error> {
         let protein = Seq::protein("MAMAPRTEINSTRING")?;
         assert_eq!(protein.to_string(), String::from("MAMAPRTEINSTRING"));
         Ok(())
     }
+
+    // ===== Sequence Length Tests =================================================================
 
     #[test]
     fn get_sequence_length() -> Result<(), Error> {
@@ -415,6 +543,8 @@ mod tests {
         Ok(())
     }
 
+    // ===== Sequence Reversal Tool Tests ==========================================================
+
     #[test]
     fn reverse_sequence() -> Result<(), Error> {
         let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
@@ -431,6 +561,8 @@ mod tests {
         Ok(())
     }
 
+    // ===== Element Counting Tool Tests ===========================================================
+
     #[test]
     fn count_nucleotides() -> Result<(), Error> {
         let dna =
@@ -442,6 +574,8 @@ mod tests {
         assert_eq!(counts[b'T'], 21);
         Ok(())
     }
+
+    // ===== Sequence Conversion Tool Tests ========================================================
 
     #[test]
     fn self_conversions() -> Result<(), Error> {
@@ -484,6 +618,8 @@ mod tests {
         Ok(())
     }
 
+    // ===== Reverse Complement Tool Tests =========================================================
+
     #[test]
     fn reverse_complement_dna() -> Result<(), Error> {
         let dna = Seq::dna("AAAACCCGGT")?;
@@ -521,6 +657,8 @@ mod tests {
         );
         Ok(())
     }
+
+    // ===== Error Formatting Tests ================================================================
 
     #[test]
     fn format_errors() {

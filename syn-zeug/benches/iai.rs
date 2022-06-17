@@ -8,7 +8,7 @@ static AMBIGUOUS: Lazy<Vec<u8>> =
 static DNA: Lazy<Seq> = Lazy::new(|| Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap());
 
 fn new() {
-    dbg!(Seq::new(&*AMBIGUOUS).unwrap());
+    Seq::new(&*AMBIGUOUS).unwrap();
 }
 
 fn rev() {

@@ -5,7 +5,6 @@ use pprof::criterion::{Output, PProfProfiler};
 use std::{fmt::Debug, time::Duration};
 use syn_zeug::seq::{Kind, Seq};
 
-// TODO: None of this nonsense, just find some real-world data and optimise for that...
 fn new_best(c: &mut Criterion) {
     bench_time_complexity(
         c,
@@ -18,6 +17,7 @@ fn new_best(c: &mut Criterion) {
     );
 }
 
+// TODO: Make this the actual worst case?
 fn new_worst(c: &mut Criterion) {
     bench_time_complexity(
         c,
