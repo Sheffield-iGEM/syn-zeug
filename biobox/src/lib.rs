@@ -23,16 +23,40 @@ impl Seq {
         wrap_res!(SZSeq::dna(seq))
     }
 
+    pub fn dna_n(seq: String) -> Result<Seq, String> {
+        wrap_res!(SZSeq::dna_n(seq))
+    }
+
+    pub fn dna_iupac(seq: String) -> Result<Seq, String> {
+        wrap_res!(SZSeq::dna_iupac(seq))
+    }
+
     pub fn rna(seq: String) -> Result<Seq, String> {
         wrap_res!(SZSeq::rna(seq))
+    }
+
+    pub fn rna_n(seq: String) -> Result<Seq, String> {
+        wrap_res!(SZSeq::rna_n(seq))
+    }
+
+    pub fn rna_iupac(seq: String) -> Result<Seq, String> {
+        wrap_res!(SZSeq::rna_iupac(seq))
     }
 
     pub fn protein(seq: String) -> Result<Seq, String> {
         wrap_res!(SZSeq::protein(seq))
     }
 
+    pub fn protein_iupac(seq: String) -> Result<Seq, String> {
+        wrap_res!(SZSeq::protein_iupac(seq))
+    }
+
     pub fn kind(&self) -> String {
         self.0.kind().to_string()
+    }
+
+    pub fn alphabet(&self) -> String {
+        self.0.alphabet().to_string()
     }
 
     pub fn len(&self) -> usize {

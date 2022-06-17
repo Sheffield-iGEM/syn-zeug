@@ -2,10 +2,10 @@
   import { Seq } from "biobox";
   let dna = "";
   let input = "";
-  let seq = null; // FIXME: Add a real type!
+  let seq = null; // TODO: Add a real type!
   let kind = "";
   let len = 0;
-  let count = null; // FIXME: What type should this really be?
+  let count = null; // TODO: What type should this really be?
   let rev = "";
   let revcomp = "";
   let rna = "";
@@ -16,7 +16,7 @@
     seq = new Seq("");
     input = e;
   }
-  $: kind = seq.kind();
+  $: kind = `${seq.kind()} (${seq.alphabet()})`;
   $: len = seq.len();
   $: rev = seq.rev().to_string();
   $: count = JSON.stringify([...seq.count_elements().entries()]);

@@ -3,7 +3,13 @@ mod utils;
 use once_cell::sync::Lazy;
 use syn_zeug::seq::{Kind, Seq};
 
+static AMBIGUOUS: Lazy<Vec<u8>> =
+    Lazy::new(|| [utils::load_bench_data("ambiguous_seq.txt"), b"X".to_vec()].concat());
 static DNA: Lazy<Seq> = Lazy::new(|| Seq::dna(utils::load_bench_data("rosalind_dna.txt")).unwrap());
+
+fn new() {
+    Seq::new(&*AMBIGUOUS).unwrap();
+}
 
 fn rev() {
     DNA.rev();
@@ -21,4 +27,4 @@ fn reverse_complement_dna() {
     DNA.reverse_complement().unwrap();
 }
 
-iai::main!(rev, count_elements, dna_to_rna, reverse_complement_dna);
+iai::main!(new, rev, count_elements, dna_to_rna, reverse_complement_dna);
