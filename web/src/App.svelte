@@ -16,7 +16,7 @@
     seq = new Seq("");
     input = e;
   }
-  $: kind = seq.kind();
+  $: kind = `${seq.kind()} (${seq.alphabet()})`;
   $: len = seq.len();
   $: rev = seq.rev().to_string();
   $: count = JSON.stringify([...seq.count_elements().entries()]);
