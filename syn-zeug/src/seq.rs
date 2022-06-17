@@ -32,9 +32,9 @@ pub struct Seq {
     alphabet: Alphabet,
 }
 
-// TODO: Add comments demarcating the different method sections (constructors, getters,
-// chainable tools, terminal tools, etc)
 impl Seq {
+    // ===== "Magic" Constructors ==================================================================
+
     pub fn new_with_kind(
         seq: impl AsRef<[u8]>,
         kinds: impl AsRef<[Kind]>,
@@ -82,6 +82,8 @@ impl Seq {
         Self::new_with_kind(&seq, [Kind::Dna, Kind::Rna, Kind::Protein], Alphabet::Iupac)
     }
 
+    // ===== Standard Constructors =================================================================
+
     pub fn dna(seq: impl AsRef<[u8]>) -> Result<Self, Error> {
         Self::new_with_kind(seq, [Kind::Dna], Alphabet::Base)
     }
@@ -114,6 +116,8 @@ impl Seq {
         Self::new_with_kind(seq, [Kind::Protein], Alphabet::Iupac)
     }
 
+    // ===== Getters ===============================================================================
+
     pub fn kind(&self) -> Kind {
         self.kind
     }
@@ -130,19 +134,13 @@ impl Seq {
         self.bytes.is_empty()
     }
 
+    // ===== Chainable Tools =======================================================================
+
     pub fn rev(&self) -> Self {
         Self {
             bytes: self.bytes.iter().copied().rev().collect(),
             ..*self
         }
-    }
-
-    pub fn count_elements(&self) -> ByteMap<usize> {
-        let mut counts = ByteMap::default();
-        for &b in &self.bytes {
-            counts[b] += 1;
-        }
-        counts
     }
 
     pub fn reverse_complement(&self) -> Result<Self, Error> {
@@ -174,13 +172,27 @@ impl Seq {
             (from, to) => Err(Error::InvalidConversion(from, to)),
         }
     }
+
+    // ===== Terminal Tools ========================================================================
+
+    pub fn count_elements(&self) -> ByteMap<usize> {
+        let mut counts = ByteMap::default();
+        for &b in &self.bytes {
+            counts[b] += 1;
+        }
+        counts
+    }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
-            Error::InvalidSeq(kind) => write!(f, "The provided sequence was not valid {kind:?}")?,
+            Error::InvalidSeq(kinds) => {
+                let kinds: Vec<_> = kinds.iter().map(|(k, a)| format!("{k} ({a})")).collect();
+                let kinds = kinds[..kinds.len() - 1].join(", ") + ", or " + &kinds[kinds.len() - 1];
+                write!(f, "The provided sequence was not valid {kinds}")?;
+            }
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
         }
         Ok(())
@@ -195,6 +207,17 @@ impl fmt::Display for Kind {
             Kind::Dna => write!(f, "DNA")?,
             Kind::Rna => write!(f, "RNA")?,
             Kind::Protein => write!(f, "Protein")?,
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for Alphabet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Alphabet::Base => write!(f, "Base")?,
+            Alphabet::N => write!(f, "N")?,
+            Alphabet::Iupac => write!(f, "IUPAC")?,
         }
         Ok(())
     }
@@ -670,19 +693,46 @@ mod tests {
             &Error::InvalidConversion(Kind::Protein, Kind::Rna).to_string(),
             "Cannot convert Protein to RNA"
         );
-        // FIXME: These need replacing!
-        // assert_eq!(
-        //     &Error::InvalidKind(Default::default()).to_string(),
-        //     "The provided sequence was not valid DNA"
-        // );
-        // assert_eq!(
-        //     &Error::InvalidKind(Default::default()).to_string(),
-        //     "The provided sequence was not valid RNA"
-        // );
-        // assert_eq!(
-        //     &Error::InvalidKind(Default::default()).to_string(),
-        //     "The provided sequence was not valid Protein"
-        // );
+        assert_eq!(
+            Error::InvalidSeq(vec![
+                (Kind::Dna, Alphabet::Base),
+                (Kind::Rna, Alphabet::Base),
+                (Kind::Dna, Alphabet::N),
+                (Kind::Rna, Alphabet::N),
+                (Kind::Protein, Alphabet::Base),
+                (Kind::Dna, Alphabet::Iupac),
+                (Kind::Rna, Alphabet::Iupac),
+                (Kind::Protein, Alphabet::Iupac)
+            ])
+            .to_string(),
+            "The provided sequence was not valid DNA (Base), RNA (Base), DNA (N), RNA (N), Protein (Base), DNA (IUPAC), RNA (IUPAC), or Protein (IUPAC)"
+        );
+        assert_eq!(
+            Error::InvalidSeq(vec![
+                (Kind::Dna, Alphabet::Base),
+                (Kind::Dna, Alphabet::N),
+                (Kind::Dna, Alphabet::Iupac),
+            ])
+            .to_string(),
+            "The provided sequence was not valid DNA (Base), DNA (N), or DNA (IUPAC)"
+        );
+        assert_eq!(
+            Error::InvalidSeq(vec![
+                (Kind::Rna, Alphabet::Base),
+                (Kind::Rna, Alphabet::N),
+                (Kind::Rna, Alphabet::Iupac),
+            ])
+            .to_string(),
+            "The provided sequence was not valid RNA (Base), RNA (N), or RNA (IUPAC)"
+        );
+        assert_eq!(
+            Error::InvalidSeq(vec![
+                (Kind::Protein, Alphabet::Base),
+                (Kind::Protein, Alphabet::Iupac)
+            ])
+            .to_string(),
+            "The provided sequence was not valid Protein (Base), or Protein (IUPAC)"
+        );
         assert_eq!(
             &Error::RevComp(Kind::Protein).to_string(),
             "Cannot reverse complement Protein"
