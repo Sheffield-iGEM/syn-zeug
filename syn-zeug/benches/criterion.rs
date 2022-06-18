@@ -88,11 +88,11 @@ fn bench_time_complexity<C, O, R, D>(
     let data = utils::load_bench_data(data_file);
 
     let mut group = c.benchmark_group(bench_name);
-    for p in 0..=10 {
+    for p in 0..=5 {
         let data = data.repeat(2_usize.pow(p));
         let size = data.len() as u64;
         let input = builder(data);
-        group.measurement_time(Duration::from_secs(10));
+        group.measurement_time(Duration::from_secs(5));
         group.throughput(Throughput::Bytes(size));
         group.bench_with_input(BenchmarkId::from_parameter(size), &input, |b, input| {
             b.iter(|| routine(input));
