@@ -1,9 +1,13 @@
 use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
-use std::{fmt, str};
+use std::{
+    fmt,
+    str, slice::SliceIndex,
+};
 
 use crate::data::{ByteMap, ALPHABETS, ALPHABET_MAP};
 
+// TODO: All of the structs and impls in this file need a more logical ordering
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
     InvalidConversion(Kind, Kind),
@@ -28,6 +32,14 @@ pub enum Alphabet {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct Seq {
     bytes: Vec<u8>,
+    kind: Kind,
+    alphabet: Alphabet,
+}
+
+// FIXME: Do I give up on this idea of slice sequences?
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+pub struct SubSeq<'a> {
+    bytes: &'a [u8],
     kind: Kind,
     alphabet: Alphabet,
 }
@@ -118,6 +130,14 @@ impl Seq {
 
     // ===== Getters ===============================================================================
 
+    pub fn subseq(&self, range: impl SliceIndex<[u8], Output = [u8]>) -> Self {
+        Self {
+            bytes: self.bytes[range].to_vec(),
+            kind: self.kind,
+            alphabet: self.alphabet,
+        }
+    }
+
     pub fn kind(&self) -> Kind {
         self.kind
     }
@@ -188,6 +208,15 @@ impl Seq {
         counts
     }
 }
+
+// FIXME: Ask the Internet about this beast...
+// impl Deref for Seq {
+//     type Target<'a> = SubSeq<'a>;
+//
+//     fn deref(&self) -> &Self::Target {
+//         &self.subseq(..)
+//     }
+// }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -554,6 +583,20 @@ mod tests {
     }
 
     // ===== Sequence Length Tests =================================================================
+
+    #[test]
+    fn get_subseq_length() -> Result<(), Error> {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
+        assert_eq!(dna.len(), 20);
+        let dna = dna.subseq(..);
+        assert_eq!(dna.len(), 20);
+        let dna = dna.subseq(5..);
+        assert_eq!(dna.len(), 15);
+        let dna = dna.subseq(5..10);
+        assert_eq!(dna.len(), 5);
+        assert_eq!(dna.to_string(), "TCTGA");
+        Ok(())
+    }
 
     #[test]
     fn get_sequence_length() -> Result<(), Error> {
