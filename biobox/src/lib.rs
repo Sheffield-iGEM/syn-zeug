@@ -73,7 +73,7 @@ impl Seq {
 
     // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
     pub fn count_elements(&self) -> Result<JsValue, String> {
-        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|x| x != 0);
+        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|_, &x| x != 0);
         serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
     }
 
