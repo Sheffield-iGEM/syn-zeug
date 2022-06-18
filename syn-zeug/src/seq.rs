@@ -160,6 +160,9 @@ impl Seq {
     pub fn convert(&self, kind: Kind) -> Result<Self, Error> {
         match (self.kind, kind) {
             (from, to) if from == to => Ok(self.clone()),
+            // OPTIMISATION: Using bytestrings and `b + 1` is 103 times faster than converting to a `str`
+            // and using `str::replace`. It's also 20.4 times faster than checking case with an `else if`
+            // statement and explicitly returning b'U' or b'u'
             (Kind::Dna, Kind::Rna) => Ok(Self {
                 bytes: self
                     .bytes
@@ -175,6 +178,8 @@ impl Seq {
 
     // ===== Terminal Tools ========================================================================
 
+    // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
+    // the equivalent (and more canonical) code written using `HashMap` and the `Entry` API
     pub fn count_elements(&self) -> ByteMap<usize> {
         let mut counts = ByteMap::default();
         for &b in &self.bytes {
