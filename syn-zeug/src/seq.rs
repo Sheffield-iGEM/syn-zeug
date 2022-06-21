@@ -1,9 +1,10 @@
 use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
-use std::{fmt, str};
+use std::{fmt, slice::SliceIndex, str};
 
 use crate::data::{ByteMap, ALPHABETS, ALPHABET_MAP};
 
+// TODO: All of the structs and impls in this file need a more logical ordering
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
     InvalidConversion(Kind, Kind),
@@ -135,6 +136,17 @@ impl Seq {
     }
 
     // ===== Chainable Tools =======================================================================
+
+    // OPTIMISATION: In the future, it may be worth looking into a `SubSeq` type that contains
+    // references / slices of the original data — that would help avoid the copying and allocation
+    // done by `slice::to_vec` here
+    pub fn subseq(&self, range: impl SliceIndex<[u8], Output = [u8]>) -> Self {
+        Self {
+            bytes: self.bytes[range].to_vec(),
+            kind: self.kind,
+            alphabet: self.alphabet,
+        }
+    }
 
     pub fn rev(&self) -> Self {
         Self {
@@ -568,6 +580,38 @@ mod tests {
         assert!(dna.is_empty());
         let dna = Seq::dna("ACGT")?;
         assert!(!dna.is_empty());
+        Ok(())
+    }
+
+    // ===== Subsequence Tests =====================================================================
+
+    #[test]
+    fn get_subseq_length() -> Result<(), Error> {
+        let dna = Seq::dna("AGCTTTTCATTCTGACTGCA")?;
+        assert_eq!(dna.len(), 20);
+        let dna = dna.subseq(..);
+        assert_eq!(dna.len(), 20);
+        let dna = dna.subseq(5..);
+        assert_eq!(dna.len(), 15);
+        let dna = dna.subseq(5..10);
+        assert_eq!(dna.len(), 5);
+        assert_eq!(dna.to_string(), "TCTGA");
+        Ok(())
+    }
+
+    #[test]
+    fn preserve_subseq_metadata() -> Result<(), Error> {
+        let seq = Seq::new("AGCTTTTCATTCTGACTGCS")?;
+        assert_eq!(seq.kind(), Kind::Protein);
+        assert_eq!(seq.alphabet(), Alphabet::Base);
+        let seq = seq.subseq(..10);
+        assert_eq!(seq.len(), 10);
+        assert_eq!(seq.to_string(), "AGCTTTTCAT");
+        assert_eq!(seq.kind(), Kind::Protein);
+        assert_eq!(seq.alphabet(), Alphabet::Base);
+        let seq = Seq::new("AGCTTTTCAT")?;
+        assert_eq!(seq.kind(), Kind::Dna);
+        assert_eq!(seq.alphabet(), Alphabet::Base);
         Ok(())
     }
 
