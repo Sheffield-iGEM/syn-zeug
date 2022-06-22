@@ -2,7 +2,10 @@ use bio::alphabets::{dna, rna};
 use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
-use crate::data::{ByteMap, ALPHABETS, ALPHABET_MAP};
+use crate::{
+    data::{ALPHABETS, ALPHABET_MAP},
+    types::ByteMap,
+};
 
 // TODO: All of the structs and impls in this file need a more logical ordering
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

@@ -1,9 +1,6 @@
 use bio::alphabets::{dna, protein, rna};
-use std::{
-    collections::HashMap,
-    hash::Hash,
-    ops::{Index, IndexMut},
-};
+use phf::{phf_map, Map};
+use std::collections::HashMap;
 // TODO: Keep an eye on this: https://github.com/rust-lang/rust/issues/74465
 use once_cell::sync::Lazy;
 
@@ -22,92 +19,111 @@ pub const ALPHABETS: [(Kind, Alphabet); 8] = [
 
 pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> =
     Lazy::new(|| {
-        let mut m = HashMap::new();
-        m.insert((Kind::Dna, Alphabet::Base), dna::alphabet());
-        m.insert((Kind::Dna, Alphabet::N), dna::n_alphabet());
-        m.insert((Kind::Dna, Alphabet::Iupac), dna::iupac_alphabet());
-
-        m.insert((Kind::Rna, Alphabet::Base), rna::alphabet());
-        m.insert((Kind::Rna, Alphabet::N), rna::n_alphabet());
-        m.insert((Kind::Rna, Alphabet::Iupac), rna::iupac_alphabet());
-
-        m.insert((Kind::Protein, Alphabet::Base), protein::alphabet());
-        m.insert((Kind::Protein, Alphabet::Iupac), protein::iupac_alphabet());
-        m
+        HashMap::from([
+            ((Kind::Dna, Alphabet::Base), dna::alphabet()),
+            ((Kind::Dna, Alphabet::N), dna::n_alphabet()),
+            ((Kind::Dna, Alphabet::Iupac), dna::iupac_alphabet()),
+            ((Kind::Rna, Alphabet::Base), rna::alphabet()),
+            ((Kind::Rna, Alphabet::N), rna::n_alphabet()),
+            ((Kind::Rna, Alphabet::Iupac), rna::iupac_alphabet()),
+            ((Kind::Protein, Alphabet::Base), protein::alphabet()),
+            ((Kind::Protein, Alphabet::Iupac), protein::iupac_alphabet()),
+        ])
     });
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct ByteMap<T>([T; 128]);
+pub const CODON_TABLE: Map<&[u8; 3], u8> = phf_map! {
+    b"TTT" => b'F',
+    b"TTC" => b'F',
+    b"TTA" => b'L',
+    b"TTG" => b'L',
 
-impl<T: Copy> ByteMap<T> {
-    pub fn new(default: T) -> Self {
-        Self([default; 128])
-    }
+    b"TCT" => b'S',
+    b"TCC" => b'S',
+    b"TCA" => b'S',
+    b"TCG" => b'S',
 
-    pub fn to_hashmap<U: From<u8> + Hash + Eq>(&self, f: impl Fn(&U, &T) -> bool) -> HashMap<U, T> {
-        self.0
-            .into_iter()
-            .enumerate()
-            .map(|(i, t)| ((i as u8).into(), t))
-            .filter(|(u, t)| f(u, t))
-            .collect()
-    }
-}
+    b"TAT" => b'Y',
+    b"TAC" => b'Y',
+    b"TAA" => b'*',
+    b"TAG" => b'*',
 
-impl<T: Copy + Default> Default for ByteMap<T> {
-    fn default() -> Self {
-        Self::new(T::default())
-    }
-}
+    b"TGT" => b'C',
+    b"TGC" => b'C',
+    b"TGA" => b'*',
+    b"TGG" => b'W',
 
-impl<T> Index<u8> for ByteMap<T> {
-    type Output = T;
+    b"CTT" => b'L',
+    b"CTC" => b'L',
+    b"CTA" => b'L',
+    b"CTG" => b'L',
 
-    fn index(&self, index: u8) -> &Self::Output {
-        &self.0[index as usize]
-    }
-}
+    b"CCT" => b'P',
+    b"CCC" => b'P',
+    b"CCA" => b'P',
+    b"CCG" => b'P',
 
-impl<T> IndexMut<u8> for ByteMap<T> {
-    fn index_mut(&mut self, index: u8) -> &mut Self::Output {
-        &mut self.0[index as usize]
-    }
-}
+    b"CAT" => b'H',
+    b"CAC" => b'H',
+    b"CAA" => b'Q',
+    b"CAG" => b'Q',
+
+    b"CGT" => b'R',
+    b"CGC" => b'R',
+    b"CGA" => b'R',
+    b"CGG" => b'R',
+
+    b"ATT" => b'I',
+    b"ATC" => b'I',
+    b"ATA" => b'I',
+    b"ATG" => b'M',
+
+    b"ACT" => b'T',
+    b"ACC" => b'T',
+    b"ACA" => b'T',
+    b"ACG" => b'T',
+
+    b"AAT" => b'N',
+    b"AAC" => b'N',
+    b"AAA" => b'K',
+    b"AAG" => b'K',
+
+    b"AGT" => b'S',
+    b"AGC" => b'S',
+    b"AGA" => b'R',
+    b"AGG" => b'R',
+
+    b"GTT" => b'V',
+    b"GTC" => b'V',
+    b"GTA" => b'V',
+    b"GTG" => b'V',
+
+    b"GCT" => b'A',
+    b"GCC" => b'A',
+    b"GCA" => b'A',
+    b"GCG" => b'A',
+
+    b"GAT" => b'D',
+    b"GAC" => b'D',
+    b"GAA" => b'E',
+    b"GAG" => b'E',
+
+    b"GGT" => b'G',
+    b"GGC" => b'G',
+    b"GGA" => b'G',
+    b"GGG" => b'G',
+};
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn bytemap_to_hashmap_by_value() {
-        let mut counts = ByteMap::default();
-        counts[b'A'] = 20;
-        counts[b'C'] = 12;
-        counts[b'G'] = 17;
-        counts[b'T'] = 21;
-        let counts: HashMap<char, _> = counts.to_hashmap(|_, &x| x != 0);
-        assert_eq!(counts.len(), 4);
-        assert_eq!(counts[&'A'], 20);
-        assert_eq!(counts[&'C'], 12);
-        assert_eq!(counts[&'G'], 17);
-        assert_eq!(counts[&'T'], 21);
-    }
-
-    #[test]
-    fn bytemap_to_hashmap_by_key() {
-        let mut counts = ByteMap::default();
-        counts[b'A'] = 20;
-        counts[b'G'] = 17;
-        counts[b'T'] = 21;
-        let counts: HashMap<char, _> = counts.to_hashmap(|&b, _| {
-            ALPHABET_MAP[&(Kind::Dna, Alphabet::Base)]
-                .symbols
-                .contains(b as usize)
-        });
-        assert_eq!(counts.len(), 8); // Lowercase 'a', 'c', 'g', and 't' are also included
-        assert_eq!(counts[&'A'], 20);
-        assert_eq!(counts[&'C'], 0);
-        assert_eq!(counts[&'G'], 17);
-        assert_eq!(counts[&'T'], 21);
+    fn codon_table_right_size() {
+        assert_eq!(CODON_TABLE.len(), 64);
+        let mut values: Vec<_> = CODON_TABLE.values().collect();
+        values.sort_unstable();
+        values.dedup();
+        assert_eq!(values.len(), 21);
     }
 }
