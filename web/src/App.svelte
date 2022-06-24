@@ -9,6 +9,7 @@
   let rev = "";
   let revcomp = "";
   let rna = "";
+  let pipeline = [{ tool : (o) => o.len(), name : 'len' }, { tool : (o) => o.reverse_complement(), name : 'revcomp'];
   $: input = dna;
   $: try {
     seq = new Seq(dna.trim());
@@ -29,6 +30,17 @@
     rna = seq.convert("Rna").to_string();
   } catch (e) {
     rna = e;
+  }
+  const operations = document.querySelector('.operations')
+  operations.addEventlistener('click', (e) => {
+    if (e.target.value === 'Sequence Length') {
+      sequenceLength()
+    }
+  })
+
+  const sequenceLength = () => {
+    pipeline.filter((func) => (func.name != 'len')
+    })
   }
 </script>
 
@@ -155,13 +167,7 @@
           <i class="fas fa-reply-all" />
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
-          >{`Input: "${input}"
-Type: ${kind}
-Length: ${len}
-Counts: ${count}
-Reverse: "${rev}"
-RevComp: "${revcomp}"
-To RNA: "${rna}"`}</textarea>
+          >{`${pipeline.item(0).name} : '${pipeline.item(0).tool(seq)}'`}</textarea>
       </div>
     </div>
   </div>
