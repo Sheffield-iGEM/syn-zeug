@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Seq } from "biobox";
   let dna = "";
   let input = "";
@@ -9,7 +10,11 @@
   let rev = "";
   let revcomp = "";
   let rna = "";
-  let pipeline = [{ tool : (o) => o.len(), name : 'len' }, { tool : (o) => o.reverse_complement(), name : 'revcomp'];
+  let functions = {
+    "Sequence Length": (o) => o.len(),
+    "Reverse Complement": (o) => o.reverse_complement().to_string(),
+  };
+  let pipeline = ["No tool selected", (o) => null];
   $: input = dna;
   $: try {
     seq = new Seq(dna.trim());
@@ -31,17 +36,15 @@
   } catch (e) {
     rna = e;
   }
-  const operations = document.querySelector('.operations')
-  operations.addEventlistener('click', (e) => {
-    if (e.target.value === 'Sequence Length') {
-      sequenceLength()
+  onMount(() => {
+    const operations = document.getElementsByClassName("functions");
+    for (let operation of operations) {
+      operation.addEventListener("click", (e) => {
+        let name = e.target.innerText;
+        pipeline = [name, functions[name]];
+      });
     }
-  })
-
-  const sequenceLength = () => {
-    pipeline.filter((func) => (func.name != 'len')
-    })
-  }
+  });
 </script>
 
 <main>
@@ -68,10 +71,10 @@
           />
         </div>
         <div class="functions">
-          <a href="#">Count bases</a>
+          <a href="#">Reverse Complement</a>
         </div>
         <div class="functions">
-          <a href="#">that</a>
+          <a href="#">Sequence Length</a>
         </div>
         <div class="functions">
           <a href="#">this</a>
@@ -167,7 +170,7 @@
           <i class="fas fa-reply-all" />
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
-          >{`${pipeline.item(0).name} : '${pipeline.item(0).tool(seq)}'`}</textarea>
+          >{`${pipeline[0]}: ${pipeline[1](seq)}`}</textarea>
       </div>
     </div>
   </div>
