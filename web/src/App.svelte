@@ -1,20 +1,24 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { Seq } from "biobox";
+  import Logo from '../Logo.svg';
+  
   let dna = "";
   let input = "";
+  let searched = '';
+  let darkBg = true;
   let seq = null; // TODO: Add a real type!
-  let kind = "";
-  let len = 0;
-  let count = null; // TODO: What type should this really be?
-  let rev = "";
-  let revcomp = "";
-  let rna = "";
-  let functions = {
-    "Sequence Length": (o) => o.len(),
-    "Reverse Complement": (o) => o.reverse_complement().to_string(),
-  };
-  let pipeline = ["No tool selected", (o) => null];
+
+  let functions = [
+    { name: "Reverse Complement", functionality : (o) => o.reverse_complement().to_string()},
+    { name: "Sequence Length", functionality :  (o) => o.len()},
+    { name: "Reverse Sequence", functionality :  (o) => o.rev().to_string()},
+    { name: "Count Sequence Elements (Bases / Residues)", functionality :  (o) => JSON.stringify([...o.count_elements().entries()])},
+    { name: "Sequence Conversion (DNA -> RNA)", functionality :  (o) => o.convert("Rna").to_string()},
+    { name: "Type", functionality : (o) => `${o.kind()} (${o.alphabet()})`},
+  ];
+
+  let pipeline = ["No tool selected", [{ name: "No tool selected", functionality : (o) => null}]];
+
   $: input = dna;
   $: try {
     seq = new Seq(dna.trim());
@@ -22,35 +26,26 @@
     seq = new Seq("");
     input = e;
   }
-  $: kind = `${seq.kind()} (${seq.alphabet()})`;
-  $: len = seq.len();
-  $: rev = seq.rev().to_string();
-  $: count = JSON.stringify([...seq.count_elements().entries()]);
-  $: try {
-    revcomp = seq.reverse_complement().to_string();
-  } catch (e) {
-    revcomp = e;
+
+  const handleBgChange = () => {
+    const bodyElement = document.querySelector('body')
+    bodyElement.classList.toggle('light', !darkBg)
+    darkBg = !darkBg
+
   }
-  $: try {
-    rna = seq.convert("Rna").to_string();
-  } catch (e) {
-    rna = e;
-  }
-  onMount(() => {
-    const operations = document.getElementsByClassName("functions");
-    for (let operation of operations) {
-      operation.addEventListener("click", (e) => {
-        let name = e.target.innerText;
-        pipeline = [name, functions[name]];
-      });
-    }
-  });
+  
+  const handleSelectedTool = (e) => {
+      let name = e.target.innerText;
+      pipeline = [name, functions.filter(func => func.name == name)];
+      console.log(pipeline)
+    };
+
 </script>
 
 <main>
   <nav class="nav-grid">
     <div class="site-title">
-      <h1>i<a>GEM</a></h1>
+      <img src={Logo} alt="University of Sheffield iGEM Logo" class="logo" on:click={handleBgChange} />
     </div>
     <ul class="nav-links flex-row">
       <li><a href="#">About</a></li>
@@ -62,74 +57,24 @@
     <div id="operations">
       <div class="flex-column">
         <div class="title">Operations</div>
-        <div class="functions">
+        <div class="search-functions">
           <input
             id="search"
             type="search"
             name="search-function"
             placeholder="Search a function.."
-          />
+            bind:value={searched}         
+            />
         </div>
-        <div class="functions">
-          <a href="#">Reverse Complement</a>
+        <!-- TODO: change this to have the functions you want popping up from the top
+        this can be done by filtering the functions list into a filtered functions array 
+        and then view only the filtered functions array
+         -->
+        {#each functions as func}
+        <div class='{(func.name.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' on:click={(e) => handleSelectedTool(e)}>
+          <a href='#' class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
         </div>
-        <div class="functions">
-          <a href="#">Sequence Length</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
-        <div class="functions">
-          <a href="#">that</a>
-        </div>
-        <div class="functions">
-          <a href="#">this</a>
-        </div>
+        {/each}
       </div>
     </div>
     <div class="gutter" />
@@ -170,7 +115,7 @@
           <i class="fas fa-reply-all" />
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
-          >{`${pipeline[0]}: ${pipeline[1](seq)}`}</textarea>
+          >{`${pipeline[0]}: ${pipeline[1][0].functionality(seq)}`}</textarea>
       </div>
     </div>
   </div>
@@ -185,8 +130,7 @@
     padding: 0;
     box-sizing: border-box;
   }
-  :root,
-  :root.classic {
+  :global(body) {
     --primary-font-family: "Red Hat Mono", monospace;
     --primary-font-colour: #2bc1e2;
     --secondary-font-color: #abb8ca;
@@ -200,8 +144,6 @@
     --tertiary-color: #050c1b;
     --nav-color: #39424e;
     --borders-color: #111827;
-  }
-  :global(body) {
     background-color: var(--secondary-color);
     max-height: 100vh;
     margin: 0px;
@@ -209,6 +151,27 @@
     scrollbar-color: var(--secondary-color);
   }
   /*-------------------------------------------------- General Styling ---------------------------------------------------------------------------------*/
+  /* TODO: find a better light color pallete please */
+  :global(body.light) {
+    --primary-font-family: "Red Hat Mono", monospace;
+    --primary-font-colour: #18394a;
+    --secondary-font-color: red;
+    --primary-font-size: 1.3rem;
+    --primary-font-weight: 600;
+    --secondary-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    --primary-color: white;
+    --secondary-color: #62839c;
+    --tertiary-color: #62839c;
+    --nav-color: #62839c;
+    --borders-color: #ffeea4;
+    --static-color: white;
+    background-color: var(--secondary-color);
+    max-height: 50vh;
+    margin: 0px;
+    overflow: hidden;
+    scrollbar-color: var(--secondary-color);
+  }
   .flex-row {
     display: flex;
     justify-content: space-around;
@@ -222,9 +185,18 @@
     display: grid;
     grid-template-columns: 20% 0.2% 39.8% 0.2% 39.8%;
   }
+
+  .logo {
+    width: 40px; margin-top: 10px;
+  }
+  
   .grid-title {
     display: grid;
     grid-template-columns: 82% 6% 6% 6%;
+  }
+
+  .inactive {
+    display: none;
   }
 
   .btn {
@@ -277,6 +249,29 @@
     text-decoration: none;
     color: var(--secondary-font-color);
   }
+
+  .search-functions {
+    border: 0.5px var(--borders-color) solid;
+    font-family: var(--secondary-font-family);
+    background-color: var(--tertiary-color);
+    font-size: 1.2rem;
+    font-weight: 500;
+    display: flex;
+    padding: 10px;
+    height: 70px;
+    align-items: center;
+  }
+  .search-functions:hover {
+    background-color: var(--primary-color);
+  }
+  .search-functions a:hover {
+    border-bottom: 1px solid var(--secondary-font-color);
+  }
+  .search-functions a {
+    text-decoration: none;
+    color: var(--secondary-font-color);
+  }
+
   .text-area {
     height: 500px;
     margin: 0px;
@@ -368,6 +363,7 @@
   .nav-links a:hover {
     border-bottom: 1px solid white;
   }
+
   @keyframes fade-in-bottom-right {
     from {
       opacity: 0;
