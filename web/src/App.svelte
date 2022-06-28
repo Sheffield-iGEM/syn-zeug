@@ -7,6 +7,8 @@
   let searched = '';
   let darkBg = true;
   let seq = null; // TODO: Add a real type!
+  const storageSize = 1000
+  let display = false
 
   let functions = [
     { name: "Reverse Complement", functionality : (o) => o.reverse_complement().to_string()},
@@ -17,6 +19,12 @@
     { name: "Type", functionality : (o) => `${o.kind()} (${o.alphabet()})`},
   ];
 
+  let chanableFunctions = [ 
+    { name : "this", functionality : (o) => null },
+    { name : "that", functionality : (o) => null },
+  ]
+
+
   let pipeline = ["No tool selected", [{ name: "No tool selected", functionality : (o) => null}]];
 
   $: input = dna;
@@ -25,6 +33,57 @@
   } catch (e) {
     seq = new Seq("");
     input = e;
+  }
+
+  const handleDisplay = () => {
+    chanableFunctions.forEach((func) => {
+      let functions = document.getElementsByClassName('functions')
+      for (let f of functions) {
+        if (func.name == f.innerText) {
+          f.classList.toggle('inactive',display)
+          f.children.item(0).classList.toggle('inactive',display)
+        }
+      }
+    })
+
+    display = !display
+  }
+
+  const handleCopy = () => {
+    let elem = document.createElement("textarea");
+    document.body.appendChild(elem);
+    elem.value = pipeline[1][0].functionality(seq);
+    elem.select();
+    document.execCommand("copy");
+    document.body.removeChild(elem);
+  }
+
+  const handleExport = () => {
+    let elem = document.createElement("textarea");
+    document.body.appendChild(elem);
+
+    let itemsToRetrieve = []
+    for (let i = 0; i < storageSize; i++) {
+      try {
+        itemsToRetrieve.push(JSON.parse(localStorage.getItem(localStorage.key(i))))
+      } catch(e) {
+        console.log(e)
+      }
+    }
+    itemsToRetrieve = itemsToRetrieve.filter(item => item !== null)
+    console.log(itemsToRetrieve)
+    elem.value = JSON.stringify(itemsToRetrieve);
+    elem.select();
+    document.execCommand("copy");
+    document.body.removeChild(elem);
+  }
+
+  const handleSave = () => {
+    const timeElapsed = Date.now();
+    const today = new Date(timeElapsed)
+    const output = { time : today, name : pipeline[0], outputText : pipeline[1][0].functionality(seq) }
+    localStorage.setItem(output.name,JSON.stringify(output))
+    console.log('Output has been saves to local storage',output)
   }
 
   const handleBgChange = () => {
@@ -37,7 +96,7 @@
   const handleSelectedTool = (e) => {
       let name = e.target.innerText;
       pipeline = [name, functions.filter(func => func.name == name)];
-      console.log(pipeline)
+      console.log(pipeline[1][0])
     };
 
 </script>
@@ -72,7 +131,15 @@
          -->
         {#each functions as func}
         <div class='{(func.name.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' on:click={(e) => handleSelectedTool(e)}>
-          <a href='#' class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
+          <a class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
+        </div>
+        {/each}
+        <div class='{('Chanable Functions'.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' id="chanable-functions" on:click={handleDisplay}>
+          <a class='{('Chanable Functions'.includes(searched)|| searched == '') ? '' : 'inactive'}'>Chanable Functions</a>
+        </div>        
+        {#each chanableFunctions as func}
+        <div class='{(func.name.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' on:click={(e) => handleSelectedTool(e)}>
+          <a class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
         </div>
         {/each}
       </div>
@@ -99,7 +166,7 @@
           <p>Input</p>
           <i class="fas fa-folder-plus" />
           <i class="fas fa-upload" />
-          <i class="fas fa-trash" />
+          <i class="fas fa-trash" on:click={() => dna = ""}/>
         </div>
         <textarea
           bind:value={dna}
@@ -110,9 +177,9 @@
         />
         <div class="title grid-title">
           <p>Output</p>
-          <i class="fas fa-save" />
-          <i class="fas fa-copy" />
-          <i class="fas fa-reply-all" />
+          <i class="fas fa-save" on:click={handleSave}/>
+          <i class="fas fa-copy" on:click={handleCopy}/>
+          <i class="fas fa-reply-all" on:click={handleExport}/>
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
           >{`${pipeline[0]}: ${pipeline[1][0].functionality(seq)}`}</textarea>
