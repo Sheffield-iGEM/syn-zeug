@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
 use crate::{
-    data::{ALPHABETS, ALPHABET_MAP},
+    data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE},
     types::ByteMap,
 };
 
@@ -185,6 +185,22 @@ impl Seq {
                     .map(|&b| if b == b'T' || b == b't' { b + 1 } else { b })
                     .collect(),
                 kind: Kind::Rna,
+                ..*self
+            }),
+            // FIXME: Need to properly handle errors here! Or maybe the lookup never fails?
+            // FIXME: This also needs to handle casing?
+            // FIXME: This should be RNA -> DNA, and I need to normalise things like case before
+            // lookup!
+            // FIXME: This needs to check that there isn't any ambiguous sequence! Alphabet should
+            // be the canonical one!
+            (Kind::Rna, Kind::Protein) => Ok(Self {
+                bytes: self
+                    .bytes
+                    .chunks_exact(3)
+                    .map(|c| *CODON_TABLE.get(c).unwrap())
+                    .take_while(|&a| a != b'*')
+                    .collect(),
+                kind: Kind::Protein,
                 ..*self
             }),
             (from, to) => Err(Error::InvalidConversion(from, to)),
@@ -676,6 +692,14 @@ mod tests {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
         let rna = dna.convert(Kind::Rna)?;
         assert_eq!(rna, Seq::rna("GaUgGaAcUuGaCuAcGuAaAuU")?);
+        Ok(())
+    }
+
+    #[test]
+    fn rna_to_protein() -> Result<(), Error> {
+        let rna = Seq::rna("AUGGCCAUGGCGCCCAGAACUGAGAUCAAUAGUACCCGUAUUAACGGGUGA")?;
+        let protein = rna.convert(Kind::Protein)?;
+        assert_eq!(protein, Seq::protein("MAMAPRTEINSTRING")?);
         Ok(())
     }
 
