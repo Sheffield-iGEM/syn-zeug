@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
     hash::Hash,
-    ops::{Index, IndexMut},
+    ops::{Index, IndexMut}, cell::Cell,
 };
+
+use once_cell::unsync::OnceCell;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ByteMap<T>([T; 128]);
@@ -40,6 +42,17 @@ impl<T> IndexMut<u8> for ByteMap<T> {
     fn index_mut(&mut self, index: u8) -> &mut Self::Output {
         &mut self.0[index as usize]
     }
+}
+
+// TODO: This could be more cleanly implemented using the lazy module of the standard library once
+// that has been stabilised. Keep an eye on https://github.com/rust-lang/rust/issues/74465
+// TODO: The naming and fields here generally could use a second look!
+// TODO: I'll probably want to add some derives at some point, or implement them manually!
+// TODO: Could just call this `Lazy` and make it work for non-Vec types too (just chaining init
+// functions)
+pub struct LazyVec<T, I: Iterator<Item = T>> {
+    vec: OnceCell<Vec<T>>,
+    partial: Cell<I>,
 }
 
 #[cfg(test)]

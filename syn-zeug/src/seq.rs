@@ -143,6 +143,10 @@ impl Seq {
     // OPTIMISATION: In the future, it may be worth looking into a `SubSeq` type that contains
     // references / slices of the original data — that would help avoid the copying and allocation
     // done by `slice::to_vec` here
+    // TODO: I think I should be able to do this now! The lifetimes were a bit of a pain, but I
+    // could just use an owned slice `Box<[u8]>` instead! I'll need to benchmark this against just
+    // copying and collecting everything, but this should be my "clever" way around the `Deref`
+    // impl not working with lifetimes!
     pub fn subseq(&self, range: impl SliceIndex<[u8], Output = [u8]>) -> Self {
         Self {
             bytes: self.bytes[range].to_vec(),
@@ -193,6 +197,11 @@ impl Seq {
             // lookup!
             // FIXME: This needs to check that there isn't any ambiguous sequence! Alphabet should
             // be the canonical one!
+            // TODO: It's worth testing the performance of a fold-based approach that takes an
+            // iterator, builds up 3 characters into a codon one at a time, then translates that
+            // codon into an amino acid. That would theoretically allow me to skip collecting and a
+            // second pass with chunks_exact, but I don't know if the one-base-at-a-time building
+            // of codons will be too slow
             (Kind::Rna, Kind::Protein) => Ok(Self {
                 bytes: self
                     .bytes
