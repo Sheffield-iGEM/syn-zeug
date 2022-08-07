@@ -58,6 +58,18 @@ fn dna_to_rna(c: &mut Criterion) {
     });
 }
 
+fn rna_to_protein(c: &mut Criterion) {
+    bench_method(c, "rna_to_protein", "rosalind_prot_rna.txt", Seq::rna, |seq| {
+        seq.convert(Kind::Protein)
+    });
+}
+
+fn dna_to_protein(c: &mut Criterion) {
+    bench_method(c, "dna_to_protein", "rosalind_prot_dna.txt", Seq::dna, |seq| {
+        seq.convert(Kind::Protein)
+    });
+}
+
 fn reverse_complement(c: &mut Criterion) {
     bench_method(
         c,
@@ -71,7 +83,7 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = new_best, new_worst, new_null, rev, count_elements, dna_to_rna, reverse_complement
+    targets = dna_to_rna, rna_to_protein, dna_to_protein // new_best, new_worst, new_null, rev, count_elements, dna_to_rna, reverse_complement
 );
 criterion_main!(benches);
 

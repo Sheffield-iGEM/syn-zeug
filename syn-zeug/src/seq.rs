@@ -1,4 +1,5 @@
 use bio::alphabets::{dna, rna};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
@@ -194,7 +195,7 @@ impl Seq {
             // FIXME: Need to properly handle errors here! Or maybe the lookup never fails?
             // FIXME: This also needs to handle casing?
             // FIXME: This should be RNA -> DNA, and I need to normalise things like case before
-            // lookup!
+            // lookup! I can just do this with a single if and some byte addition / subtraction
             // FIXME: This needs to check that there isn't any ambiguous sequence! Alphabet should
             // be the canonical one!
             // TODO: It's worth testing the performance of a fold-based approach that takes an
@@ -202,13 +203,31 @@ impl Seq {
             // codon into an amino acid. That would theoretically allow me to skip collecting and a
             // second pass with chunks_exact, but I don't know if the one-base-at-a-time building
             // of codons will be too slow
+            // (Kind::Rna, Kind::Protein) => Ok(Self {
+            //     bytes: self
+            //         .bytes
+            //         .chunks_exact(3)
+            //         .map(|c| *CODON_TABLE.get(c).unwrap())
+            //         .take_while(|&a| a != b'*')
+            //         .collect(),
+            //     kind: Kind::Protein,
+            //     ..*self
+            // }),
             (Kind::Rna, Kind::Protein) => Ok(Self {
                 bytes: self
                     .bytes
-                    .chunks_exact(3)
-                    .map(|c| *CODON_TABLE.get(c).unwrap())
-                    .take_while(|&a| a != b'*')
+                    .iter()
+                    .copied()
+                    .chunks(3)
+                    .into_iter()
+                    .map(|c| *CODON_TABLE.get(&c.collect::<Vec<_>>()).unwrap())
+                    // .take_while(|&a| a != b'*')
                     .collect(),
+                kind: Kind::Protein,
+                ..*self
+            }),
+            (Kind::Dna, Kind::Protein) => Ok(Self {
+                bytes: self.convert(Kind::Rna)?.convert(Kind::Protein)?.bytes,
                 kind: Kind::Protein,
                 ..*self
             }),

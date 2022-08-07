@@ -1,7 +1,10 @@
 use std::{
+    cell::Cell,
     collections::HashMap,
+    fmt::Debug,
     hash::Hash,
-    ops::{Index, IndexMut}, cell::Cell,
+    iter::FusedIterator,
+    ops::{Index, IndexMut},
 };
 
 use once_cell::unsync::OnceCell;
@@ -44,15 +47,25 @@ impl<T> IndexMut<u8> for ByteMap<T> {
     }
 }
 
+// TODO: Would iterating over &u8 help or hurt here? Surely a reference is actually a bigger type
+// than u8 is on its own. I don't see why copying u8's would be slower than constructing
+// references, but still should be tested!
+// OPTIMI
+// OPTIMISATION: Restricting this trait further (adding others like `ExactSizeIterator`) could be
+// helpful for optimisation by the compiler, but the use of `take_while()` has forced the bounds to
+// be opened to just `Iterator` and `FusedIterator`
+trait ByteIter: Debug + FusedIterator<Item = u8> + Iterator<Item = u8> {}
+
 // TODO: This could be more cleanly implemented using the lazy module of the standard library once
 // that has been stabilised. Keep an eye on https://github.com/rust-lang/rust/issues/74465
 // TODO: The naming and fields here generally could use a second look!
 // TODO: I'll probably want to add some derives at some point, or implement them manually!
 // TODO: Could just call this `Lazy` and make it work for non-Vec types too (just chaining init
 // functions)
-pub struct LazyVec<T, I: Iterator<Item = T>> {
+// TODO: This should implement Deref, like the Lazy type does!
+pub struct LazyVec<T> {
     vec: OnceCell<Vec<T>>,
-    partial: Cell<I>,
+    partial: dyn ByteIter,
 }
 
 #[cfg(test)]
