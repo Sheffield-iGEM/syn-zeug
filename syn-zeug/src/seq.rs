@@ -1,16 +1,16 @@
 use bio::alphabets::{dna, rna};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
 use crate::{
     data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE},
-    types::ByteMap,
+    types::{ByteMap, Case},
 };
 
 // TODO: All of the structs and impls in this file need a more logical ordering
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
+    AmbiguousConversion((Kind, Alphabet), Kind),
     InvalidConversion(Kind, Kind),
     InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
@@ -144,10 +144,6 @@ impl Seq {
     // OPTIMISATION: In the future, it may be worth looking into a `SubSeq` type that contains
     // references / slices of the original data — that would help avoid the copying and allocation
     // done by `slice::to_vec` here
-    // TODO: I think I should be able to do this now! The lifetimes were a bit of a pain, but I
-    // could just use an owned slice `Box<[u8]>` instead! I'll need to benchmark this against just
-    // copying and collecting everything, but this should be my "clever" way around the `Deref`
-    // impl not working with lifetimes!
     pub fn subseq(&self, range: impl SliceIndex<[u8], Output = [u8]>) -> Self {
         Self {
             bytes: self.bytes[range].to_vec(),
@@ -177,9 +173,33 @@ impl Seq {
         }
     }
 
+    pub fn normalize_case(&self, case: Case) -> Self {
+        // OPTIMISATION: Using `to_ascii_lowercase()` and `to_ascii_uppercase()` checks that each
+        // byte is actually a letter before changing its case, but we know the only non-letter
+        // byte that can appear in sequences is the stop codon `*` present in protein sequences. We
+        // perform the bare minimum amount of checking to keep things as fast as possible!
+        let bytes = match case {
+            Case::Upper => self
+                .bytes
+                .iter()
+                .map(|&b| if b >= 97 { b - 32 } else { b })
+                .collect(),
+            Case::Lower if self.kind != Kind::Protein => self
+                .bytes
+                .iter()
+                .map(|&b| if b <= 90 { b + 32 } else { b })
+                .collect(),
+            Case::Lower => self
+                .bytes
+                .iter()
+                .map(|&b| if (65..=90).contains(&b) { b + 32 } else { b })
+                .collect(),
+        };
+        Self { bytes, ..*self }
+    }
+
     pub fn convert(&self, kind: Kind) -> Result<Self, Error> {
         match (self.kind, kind) {
-            (from, to) if from == to => Ok(self.clone()),
             // OPTIMISATION: Using bytestrings and `b + 1` is 103 times faster than converting to a `str`
             // and using `str::replace`. It's also 20.4 times faster than checking case with an `else if`
             // statement and explicitly returning b'U' or b'u'
@@ -192,45 +212,23 @@ impl Seq {
                 kind: Kind::Rna,
                 ..*self
             }),
-            // FIXME: Need to properly handle errors here! Or maybe the lookup never fails?
-            // FIXME: This also needs to handle casing?
-            // FIXME: This should be RNA -> DNA, and I need to normalise things like case before
-            // lookup! I can just do this with a single if and some byte addition / subtraction
-            // FIXME: This needs to check that there isn't any ambiguous sequence! Alphabet should
-            // be the canonical one!
-            // TODO: It's worth testing the performance of a fold-based approach that takes an
-            // iterator, builds up 3 characters into a codon one at a time, then translates that
-            // codon into an amino acid. That would theoretically allow me to skip collecting and a
-            // second pass with chunks_exact, but I don't know if the one-base-at-a-time building
-            // of codons will be too slow
-            // (Kind::Rna, Kind::Protein) => Ok(Self {
-            //     bytes: self
-            //         .bytes
-            //         .chunks_exact(3)
-            //         .map(|c| *CODON_TABLE.get(c).unwrap())
-            //         .take_while(|&a| a != b'*')
-            //         .collect(),
-            //     kind: Kind::Protein,
-            //     ..*self
-            // }),
-            (Kind::Rna, Kind::Protein) => Ok(Self {
+            (Kind::Rna, Kind::Protein) if self.alphabet == Alphabet::Base => Ok(Self {
                 bytes: self
+                    .normalize_case(Case::Upper)
                     .bytes
-                    .iter()
-                    .copied()
-                    .chunks(3)
-                    .into_iter()
-                    .map(|c| *CODON_TABLE.get(&c.collect::<Vec<_>>()).unwrap())
-                    // .take_while(|&a| a != b'*')
+                    .chunks_exact(3)
+                    .map(|c| CODON_TABLE[c])
                     .collect(),
                 kind: Kind::Protein,
                 ..*self
             }),
-            (Kind::Dna, Kind::Protein) => Ok(Self {
-                bytes: self.convert(Kind::Rna)?.convert(Kind::Protein)?.bytes,
-                kind: Kind::Protein,
-                ..*self
-            }),
+            (Kind::Dna, Kind::Protein) if self.alphabet == Alphabet::Base => {
+                self.convert(Kind::Rna)?.convert(Kind::Protein)
+            }
+            (Kind::Dna | Kind::Rna, Kind::Protein) => {
+                Err(Error::AmbiguousConversion((self.kind, self.alphabet), kind))
+            }
+            (from, to) if from == to => Ok(self.clone()),
             (from, to) => Err(Error::InvalidConversion(from, to)),
         }
     }
@@ -251,6 +249,10 @@ impl Seq {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            // FIXME
+            Error::AmbiguousConversion((fk, fa), tk) => {
+                write!(f, "The conversion from {fk} ({fa}) to {tk} is ambiguous")?;
+            }
             Error::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
             Error::InvalidSeq(kinds) => {
                 let kinds: Vec<_> = kinds.iter().map(|(k, a)| format!("{k} ({a})")).collect();
@@ -589,6 +591,38 @@ mod tests {
         );
     }
 
+    // ===== Case Conversion Tests =================================================================
+
+    #[test]
+    fn to_lowercase() -> Result<(), Error> {
+        let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
+        assert_eq!(
+            dna.normalize_case(Case::Lower),
+            Seq::dna("gatggaacttgactacgtaaatt")?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn to_uppercase() -> Result<(), Error> {
+        let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
+        assert_eq!(
+            dna.normalize_case(Case::Upper),
+            Seq::dna("GATGGAACTTGACTACGTAAATT")?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn to_lowercase_protein() -> Result<(), Error> {
+        let protein = Seq::protein("MAMAPRTEINSTRING*")?;
+        assert_eq!(
+            protein.normalize_case(Case::Lower),
+            Seq::protein("mamaprteinstring*")?
+        );
+        Ok(())
+    }
+
     // ===== String Conversion Tests ===============================================================
 
     #[test]
@@ -727,7 +761,44 @@ mod tests {
     fn rna_to_protein() -> Result<(), Error> {
         let rna = Seq::rna("AUGGCCAUGGCGCCCAGAACUGAGAUCAAUAGUACCCGUAUUAACGGGUGA")?;
         let protein = rna.convert(Kind::Protein)?;
-        assert_eq!(protein, Seq::protein("MAMAPRTEINSTRING")?);
+        assert_eq!(protein, Seq::protein("MAMAPRTEINSTRING*")?);
+        Ok(())
+    }
+
+    #[test]
+    fn dna_to_protein() -> Result<(), Error> {
+        let dna = Seq::dna("ATGGCCATGGCGCCCAGAACTGAGATCAATAGTACCCGTATTAACGGGTGA")?;
+        let protein = dna.convert(Kind::Protein)?;
+        assert_eq!(protein, Seq::protein("MAMAPRTEINSTRING*")?);
+        Ok(())
+    }
+
+    #[test]
+    fn dna_lowercase_to_protein() -> Result<(), Error> {
+        let dna = Seq::dna("atggccatggcgcccagaactgagatcaatagtacccgtattaacgggtga")?;
+        let protein = dna.convert(Kind::Protein)?;
+        assert_eq!(protein, Seq::protein("MAMAPRTEINSTRING*")?);
+        Ok(())
+    }
+
+    #[test]
+    fn rna_ambiguous_to_protein() -> Result<(), Error> {
+        let rna = Seq::rna_n("AUGGCCAUGGCGNCCAGAACUGAGAUCAAUNGUACCCGUAUNAACGGGNGA")?;
+        assert_eq!(
+            rna.convert(Kind::Protein),
+            Err(Error::AmbiguousConversion(
+                (Kind::Rna, Alphabet::N),
+                Kind::Protein
+            ))
+        );
+        let rna = Seq::rna_iupac("AUGGCCAUBGCGNCCAGAACUGAGAUCAAUWGUACCCGUAUNASCGGGNGA")?;
+        assert_eq!(
+            rna.convert(Kind::Protein),
+            Err(Error::AmbiguousConversion(
+                (Kind::Rna, Alphabet::Iupac),
+                Kind::Protein
+            ))
+        );
         Ok(())
     }
 
@@ -789,6 +860,14 @@ mod tests {
 
     #[test]
     fn format_errors() {
+        assert_eq!(
+            &Error::AmbiguousConversion((Kind::Rna, Alphabet::N), Kind::Protein).to_string(),
+            "The conversion from RNA (N) to Protein is ambiguous"
+        );
+        assert_eq!(
+            &Error::AmbiguousConversion((Kind::Rna, Alphabet::Iupac), Kind::Protein).to_string(),
+            "The conversion from RNA (IUPAC) to Protein is ambiguous"
+        );
         assert_eq!(
             &Error::InvalidConversion(Kind::Protein, Kind::Dna).to_string(),
             "Cannot convert Protein to DNA"

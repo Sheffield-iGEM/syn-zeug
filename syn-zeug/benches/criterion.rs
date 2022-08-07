@@ -3,7 +3,10 @@ mod utils;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use pprof::criterion::{Output, PProfProfiler};
 use std::{fmt::Debug, time::Duration};
-use syn_zeug::seq::{Kind, Seq};
+use syn_zeug::{
+    seq::{Kind, Seq},
+    types::Case,
+};
 
 fn new_best(c: &mut Criterion) {
     bench_time_complexity(
@@ -52,6 +55,12 @@ fn count_elements(c: &mut Criterion) {
     );
 }
 
+fn normalize_case(c: &mut Criterion) {
+    bench_method(c, "normalize_case", "rosalind_dna.txt", Seq::dna, |seq| {
+        seq.normalize_case(Case::Lower)
+    });
+}
+
 fn dna_to_rna(c: &mut Criterion) {
     bench_method(c, "dna_to_rna", "rosalind_dna.txt", Seq::dna, |seq| {
         seq.convert(Kind::Rna)
@@ -59,15 +68,23 @@ fn dna_to_rna(c: &mut Criterion) {
 }
 
 fn rna_to_protein(c: &mut Criterion) {
-    bench_method(c, "rna_to_protein", "rosalind_prot_rna.txt", Seq::rna, |seq| {
-        seq.convert(Kind::Protein)
-    });
+    bench_method(
+        c,
+        "rna_to_protein",
+        "rosalind_prot_rna.txt",
+        Seq::rna,
+        |seq| seq.convert(Kind::Protein),
+    );
 }
 
 fn dna_to_protein(c: &mut Criterion) {
-    bench_method(c, "dna_to_protein", "rosalind_prot_dna.txt", Seq::dna, |seq| {
-        seq.convert(Kind::Protein)
-    });
+    bench_method(
+        c,
+        "dna_to_protein",
+        "rosalind_prot_dna.txt",
+        Seq::dna,
+        |seq| seq.convert(Kind::Protein),
+    );
 }
 
 fn reverse_complement(c: &mut Criterion) {
@@ -83,7 +100,8 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = dna_to_rna, rna_to_protein, dna_to_protein // new_best, new_worst, new_null, rev, count_elements, dna_to_rna, reverse_complement
+    targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
+              rna_to_protein, dna_to_protein, reverse_complement
 );
 criterion_main!(benches);
 

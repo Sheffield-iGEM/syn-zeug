@@ -19,6 +19,7 @@ pub const ALPHABETS: [(Kind, Alphabet); 8] = [
 
 pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> =
     Lazy::new(|| {
+        let stop_codon = bio::alphabets::Alphabet::new(b"*");
         HashMap::from([
             ((Kind::Dna, Alphabet::Base), dna::alphabet()),
             ((Kind::Dna, Alphabet::N), dna::n_alphabet()),
@@ -26,8 +27,14 @@ pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet
             ((Kind::Rna, Alphabet::Base), rna::alphabet()),
             ((Kind::Rna, Alphabet::N), rna::n_alphabet()),
             ((Kind::Rna, Alphabet::Iupac), rna::iupac_alphabet()),
-            ((Kind::Protein, Alphabet::Base), protein::alphabet()),
-            ((Kind::Protein, Alphabet::Iupac), protein::iupac_alphabet()),
+            (
+                (Kind::Protein, Alphabet::Base),
+                protein::alphabet().union(&stop_codon),
+            ),
+            (
+                (Kind::Protein, Alphabet::Iupac),
+                protein::iupac_alphabet().union(&stop_codon),
+            ),
         ])
     });
 
@@ -112,7 +119,6 @@ pub const CODON_TABLE: Map<&[u8], u8> = phf_map! {
     b"GGA" => b'G',
     b"GGG" => b'G',
 };
-
 
 #[cfg(test)]
 mod tests {
