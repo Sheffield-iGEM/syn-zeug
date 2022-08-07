@@ -212,6 +212,15 @@ impl Seq {
                 kind: Kind::Rna,
                 ..*self
             }),
+            (Kind::Rna, Kind::Dna) => Ok(Self {
+                bytes: self
+                    .bytes
+                    .iter()
+                    .map(|&b| if b == b'U' || b == b'u' { b - 1 } else { b })
+                    .collect(),
+                kind: Kind::Dna,
+                ..*self
+            }),
             (Kind::Rna, Kind::Protein) if self.alphabet == Alphabet::Base => Ok(Self {
                 bytes: self
                     .normalize_case(Case::Upper)
@@ -754,6 +763,22 @@ mod tests {
         let dna = Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?;
         let rna = dna.convert(Kind::Rna)?;
         assert_eq!(rna, Seq::rna("GaUgGaAcUuGaCuAcGuAaAuU")?);
+        Ok(())
+    }
+
+    #[test]
+    fn rna_to_dna() -> Result<(), Error> {
+        let rna = Seq::rna("GAUGGAACUUGACUACGUAAAUU")?;
+        let dna = rna.convert(Kind::Dna)?;
+        assert_eq!(dna, Seq::dna("GATGGAACTTGACTACGTAAATT")?);
+        Ok(())
+    }
+
+    #[test]
+    fn rna_to_dna_keep_case() -> Result<(), Error> {
+        let rna = Seq::rna("GaUgGaAcUuGaCuAcGuAaAuU")?;
+        let dna = rna.convert(Kind::Dna)?;
+        assert_eq!(dna, Seq::dna("GaTgGaAcTtGaCtAcGtAaAtT")?);
         Ok(())
     }
 
