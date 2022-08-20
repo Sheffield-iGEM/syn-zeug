@@ -174,6 +174,7 @@ impl Seq {
     }
 
     pub fn normalize_case(&self, case: Case) -> Self {
+        // TODO: I never did add numbers for how many times faster this version is...
         // OPTIMISATION: Using `to_ascii_lowercase()` and `to_ascii_uppercase()` checks that each
         // byte is actually a letter before changing its case, but we know the only non-letter
         // byte that can appear in sequences is the stop codon `*` present in protein sequences. We

@@ -1,5 +1,5 @@
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
-
 use syn_zeug::seq::Seq as SZSeq;
 use wasm_bindgen::prelude::*;
 
@@ -7,6 +7,10 @@ macro_rules! wrap_res {
     ($e:expr) => {
         Ok(Seq($e.map_err(|e| e.to_string())?))
     };
+}
+
+fn try_from_js<T: DeserializeOwned>(val: JsValue) -> Result<T, String> {
+    serde_wasm_bindgen::from_value(val).map_err(|e| e.to_string())
 }
 
 #[wasm_bindgen]
@@ -67,23 +71,33 @@ impl Seq {
         self.0.is_empty()
     }
 
-    pub fn rev(&self) -> Seq {
-        Seq(self.0.rev())
+    pub fn subseq(&self, start: usize, end: usize) -> Seq {
+        // TODO: Should this range be inclusive or exclusive?
+        Seq(self.0.subseq(start..=end))
     }
 
-    // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
-    pub fn count_elements(&self) -> Result<JsValue, String> {
-        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|_, &x| x != 0);
-        serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
+    pub fn rev(&self) -> Seq {
+        Seq(self.0.rev())
     }
 
     pub fn reverse_complement(&self) -> Result<Seq, String> {
         wrap_res!(self.0.reverse_complement())
     }
 
+    pub fn normalize_case(&self, seq_case: JsValue) -> Result<Seq, String> {
+        let case = try_from_js(seq_case)?;
+        Ok(Seq(self.0.normalize_case(case)))
+    }
+
     pub fn convert(&self, kind: JsValue) -> Result<Seq, String> {
-        let kind = serde_wasm_bindgen::from_value(kind).map_err(|e| e.to_string())?;
+        let kind = try_from_js(kind)?;
         wrap_res!(self.0.convert(kind))
+    }
+
+    // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
+    pub fn count_elements(&self) -> Result<JsValue, String> {
+        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|_, &x| x != 0);
+        serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
     }
 
     #[allow(clippy::inherent_to_string)]
