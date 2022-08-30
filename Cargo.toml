@@ -1,7 +1,8 @@
 [workspace]
 members = [
-  "syn-zeug",
   "biobox",
+  "rust-bio",
+  "syn-zeug",
 ]
 
 [profile.release]
