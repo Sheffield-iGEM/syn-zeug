@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from "@brainandbones/skeleton";
   import { Seq } from "biobox";
   import Logo from "../Logo.svg";
 

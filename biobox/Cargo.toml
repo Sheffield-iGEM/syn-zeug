@@ -11,4 +11,4 @@ syn-zeug = { path = "../syn-zeug" }
 getrandom = { version = "0.2.7", features = ["js"] }
 wasm-bindgen = "0.2.82"
 serde-wasm-bindgen = "0.4.3"
-serde = "1.0.143"
+serde = "1.0.144"
