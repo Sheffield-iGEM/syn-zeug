@@ -13,20 +13,29 @@
   let display = false;
 
   let functions = [
-    {
-      name: "Reverse Complement",
-      functionality: (o) => o.reverse_complement().to_string(),
-    },
+    { name: "Type", functionality: (o) => `${o.kind()} (${o.alphabet()})` },
     { name: "Sequence Length", functionality: (o) => o.len() },
+    {
+      name: "Convert to Lower Case",
+      functionality: (o) => o.normalize_case("Lower").to_string(),
+    },
+    {
+      name: "Convert to Upper Case",
+      functionality: (o) => o.normalize_case("Upper").to_string(),
+    },
     { name: "Reverse Sequence", functionality: (o) => o.rev().to_string() },
     {
-      name: "Count Sequence Elements (Bases / Residues)",
+      name: "Count Elements",
       functionality: (o) => {
         return [...o.count_elements()]
           .sort()
           .map((pair) => pair.join(": "))
           .join("\n");
       },
+    },
+    {
+      name: "Reverse Complement",
+      functionality: (o) => o.reverse_complement().to_string(),
     },
     {
       name: "Convert to RNA",
@@ -40,7 +49,6 @@
       name: "Convert to Protein",
       functionality: (o) => o.convert("Protein").to_string(),
     },
-    { name: "Type", functionality: (o) => `${o.kind()} (${o.alphabet()})` },
   ];
 
   let chanableFunctions = [
@@ -182,33 +190,33 @@
             >
           </div>
         {/each}
-        <div
-          class={"Chanable Functions".includes(searched) || searched == ""
-            ? "functions"
-            : "functions inactive"}
-          id="chanable-functions"
-          on:click={handleDisplay}
-        >
-          <a
-            class={"Chanable Functions".includes(searched) || searched == ""
-              ? ""
-              : "inactive"}>Chanable Functions</a
-          >
-        </div>
-        {#each chanableFunctions as func}
-          <div
-            class={func.name.includes(searched) || searched == ""
-              ? "functions"
-              : "functions inactive"}
-            on:click={(e) => handleSelectedTool(e)}
-          >
-            <a
-              class={func.name.includes(searched) || searched == ""
-                ? ""
-                : "inactive"}>{func.name}</a
-            >
-          </div>
-        {/each}
+        <!-- <div -->
+        <!--   class={"Chanable Functions".includes(searched) || searched == "" -->
+        <!--     ? "functions" -->
+        <!--     : "functions inactive"} -->
+        <!--   id="chanable-functions" -->
+        <!--   on:click={handleDisplay} -->
+        <!-- > -->
+        <!--   <a -->
+        <!--     class={"Chanable Functions".includes(searched) || searched == "" -->
+        <!--       ? "" -->
+        <!--       : "inactive"}>Chanable Functions</a -->
+        <!--   > -->
+        <!-- </div> -->
+        <!-- {#each chanableFunctions as func} -->
+        <!--   <div -->
+        <!--     class={func.name.includes(searched) || searched == "" -->
+        <!--       ? "functions" -->
+        <!--       : "functions inactive"} -->
+        <!--     on:click={(e) => handleSelectedTool(e)} -->
+        <!--   > -->
+        <!--     <a -->
+        <!--       class={func.name.includes(searched) || searched == "" -->
+        <!--         ? "" -->
+        <!--         : "inactive"}>{func.name}</a -->
+        <!--     > -->
+        <!--   </div> -->
+        <!-- {/each} -->
       </div>
     </div>
     <div class="gutter" />
