@@ -287,7 +287,7 @@
     --primary-color: #111827;
     --secondary-color: #1d2432;
     --tertiary-color: #050c1b;
-    --nav-color: #39424e;
+    --nav-color: #1c191c;
     --borders-color: #111827;
     background-color: var(--secondary-color);
     max-height: 100vh;
