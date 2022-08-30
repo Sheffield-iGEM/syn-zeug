@@ -738,6 +738,50 @@ mod tests {
         Ok(())
     }
 
+    // ===== ORF Finding + Translation Tool Tests ==================================================
+
+    #[test]
+    fn find_orfs() -> Result<(), Error> {
+        let dna = Seq::dna(
+            "AGCCATGTAGCTAACTCAGGTTACATGGGGATGACCCCGCGACTTGGA\
+             TTAGAGTCTCTTTTGGAATAAGCCTGAATGATCCGAGTAGCATCTCAG",
+        )?;
+        use bio::seq_analysis::orf::{Finder, Orf};
+        let start_codons = vec![b"ATG"];
+        let stop_codons = vec![b"TGA", b"TAG", b"TAA"];
+        let min_len = 3;
+        let finder = Finder::new(start_codons, stop_codons, min_len);
+
+        for Orf { start, end, offset } in finder.find_all(dna.to_string().as_bytes()) {
+            let orf = &dna.subseq(start..end);
+            let prot = orf.convert(Kind::Protein)?;
+            println!("ORF ({start} -> {end}): {prot}");
+            for Orf {
+                start: s, end: e, ..
+            } in finder.find_all(orf.subseq(3..).to_string().as_bytes())
+            {
+                let end = start + e + 3;
+                let start = start + s + 3;
+                let orf = &dna.subseq(start..end); //.convert(Kind::Protein)?;
+                let prot = orf.convert(Kind::Protein)?;
+                println!("ORF ({start} -> {end}): {prot}");
+            }
+            //...do something with orf sequence...
+        }
+        for Orf { start, end, offset } in
+            finder.find_all(dna.reverse_complement()?.to_string().as_bytes())
+        {
+            let orf = &dna
+                .reverse_complement()?
+                .subseq(start..end)
+                .convert(Kind::Protein)?;
+            println!("ORF ({start} -> {end}): {orf}");
+            //...do something with orf sequence...
+        }
+        panic!();
+        Ok(())
+    }
+
     // ===== Sequence Conversion Tool Tests ========================================================
 
     #[test]
