@@ -1,4 +1,7 @@
-use bio::alphabets::{dna, rna};
+use bio::{
+    alphabets::{dna, rna},
+    seq_analysis::orf::{self, Orf},
+};
 use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
@@ -241,6 +244,23 @@ impl Seq {
             (from, to) if from == to => Ok(self.clone()),
             (from, to) => Err(Error::InvalidConversion(from, to)),
         }
+    }
+
+    // TODO: Add parameters allowing the user to change which start and stop codons are used
+    // TODO: Needs benchmarking!
+    // TODO: Make this IUPAC aware?
+    // FIXME: Needs to check sequence kind
+    pub fn find_orfs(&self, min_len: usize) -> Vec<(Orf, Self)> {
+        let start_codons = vec![b"ATG"];
+        let stop_codons = vec![b"TGA", b"TAG", b"TAA"];
+        let min_len = min_len * 3;
+        // TODO: `orf::Finder::new()` should be changed to take `AsRef<[&[u8; 3]]>`
+        let finder = orf::Finder::new(start_codons, stop_codons, min_len);
+
+        finder
+            .find_all(&self.bytes)
+            .map(|orf| (orf, self.subseq(orf.start..orf.end)))
+            .collect()
     }
 
     // ===== Terminal Tools ========================================================================
@@ -746,26 +766,99 @@ mod tests {
             "AGCCATGTAGCTAACTCAGGTTACATGGGGATGACCCCGCGACTTGGA\
              TTAGAGTCTCTTTTGGAATAAGCCTGAATGATCCGAGTAGCATCTCAG",
         )?;
-        use bio::seq_analysis::orf::{Finder, Orf};
-        let start_codons = vec![b"ATG"];
-        let stop_codons = vec![b"TGA", b"TAG", b"TAA"];
-        let min_len = 3;
-        let finder = Finder::new(start_codons, stop_codons, min_len);
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 4,
+                        end: 10,
+                        offset: 1,
+                    },
+                    Seq::dna("ATGTAG")?
+                ),
+                (
+                    Orf {
+                        start: 24,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("ATGGGGATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
+                ),
+                (
+                    Orf {
+                        start: 30,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("ATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
+                )
+            ],
+            dna.find_orfs(1)
+        );
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 70,
+                        end: 76,
+                        offset: 1,
+                    },
+                    Seq::dna("ATGTAA")?
+                ),
+                (
+                    Orf {
+                        start: 5,
+                        end: 86,
+                        offset: 2,
+                    },
+                    Seq::dna("ATGCTACTCGGATCATTCAGGCTTATTCCAAAAGAGACTCTAATCCAAGTCGCGGGGTCATCCCCATGTAACCTGAGTTAG")?
+                ),
+            ],
+            dna.reverse_complement()?.find_orfs(1)
+        );
+        Ok(())
+    }
 
-        for Orf { start, end, .. } in finder.find_all(dna.to_string().as_bytes()) {
-            let orf = &dna.subseq(start..end).convert(Kind::Protein)?;
-            println!("ORF ({start} -> {end}): {orf}");
-        }
-        for Orf { start, end, .. } in
-            finder.find_all(dna.reverse_complement()?.to_string().as_bytes())
-        {
-            let orf = &dna
-                .reverse_complement()?
-                .subseq(start..end)
-                .convert(Kind::Protein)?;
-            println!("ORF ({start} -> {end}): {orf}");
-        }
-        panic!();
+    #[test]
+    fn find_large_orfs() -> Result<(), Error> {
+        let dna = Seq::dna(
+            "AGCCATGTAGCTAACTCAGGTTACATGGGGATGACCCCGCGACTTGGA\
+             TTAGAGTCTCTTTTGGAATAAGCCTGAATGATCCGAGTAGCATCTCAG",
+        )?;
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 24,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("ATGGGGATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
+                ),
+                (
+                    Orf {
+                        start: 30,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("ATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
+                )
+            ],
+            dna.find_orfs(12)
+        );
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 5,
+                        end: 86,
+                        offset: 2,
+                    },
+                    Seq::dna("ATGCTACTCGGATCATTCAGGCTTATTCCAAAAGAGACTCTAATCCAAGTCGCGGGGTCATCCCCATGTAACCTGAGTTAG")?
+                ),
+            ],
+            dna.reverse_complement()?.find_orfs(12)
+        );
         Ok(())
     }
 
