@@ -249,10 +249,19 @@ impl Seq {
     // TODO: Add parameters allowing the user to change which start and stop codons are used
     // TODO: Needs benchmarking!
     // TODO: Make this IUPAC aware?
+    // TODO: Write a function that allows to sequence to be compared, taking into account the IUPAC
+    // ambiguities!
+    // TODO: Codon table as nested match statements picking codons apart one base at a time?
+    // TODO: Write a function that takes a list of sequences, finds which bases are present in each
+    // position, unifies them into a few sequences with IUPAC placeholders, then expands the set to
+    // also include all IUPAC supersets. Takes a set of Base sequences, and adds to that set all
+    // IUPAC variations that are guaranteed to, no matter how their ambiguities are resolved, be an
+    // original sequence from the Base set. Would make a nice const fn!
     // FIXME: Needs to check sequence kind
     pub fn find_orfs(&self, min_len: usize) -> Vec<(Orf, Self)> {
         let start_codons = vec![b"ATG"];
-        let stop_codons = vec![b"TGA", b"TAG", b"TAA"];
+        // TODO: Only use IUPAC if input is IUPAC?
+        let stop_codons = vec![b"TGA", b"TAG", b"TAA", b"TAR", b"TRA"];
         let min_len = min_len * 3;
         // TODO: `orf::Finder::new()` should be changed to take `AsRef<[&[u8; 3]]>`
         let finder = orf::Finder::new(start_codons, stop_codons, min_len);
