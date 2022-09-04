@@ -12,6 +12,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Install and Build
         run: |
