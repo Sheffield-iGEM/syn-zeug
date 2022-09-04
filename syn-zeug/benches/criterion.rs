@@ -100,8 +100,9 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
-              rna_to_protein, dna_to_protein, reverse_complement
+    targets = dna_to_protein
+    // targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
+    //           rna_to_protein, dna_to_protein, reverse_complement
 );
 criterion_main!(benches);
 
