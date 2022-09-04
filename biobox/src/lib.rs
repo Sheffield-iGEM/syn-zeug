@@ -1,4 +1,4 @@
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
 use syn_zeug::seq::Seq as SZSeq;
 use wasm_bindgen::prelude::*;
@@ -14,6 +14,7 @@ fn try_from_js<T: DeserializeOwned>(val: JsValue) -> Result<T, String> {
 }
 
 #[wasm_bindgen]
+#[derive(Serialize, Deserialize)]
 pub struct Seq(SZSeq);
 
 #[wasm_bindgen]
@@ -21,6 +22,11 @@ impl Seq {
     #[wasm_bindgen(constructor)]
     pub fn new(seq: String) -> Result<Seq, String> {
         wrap_res!(SZSeq::new(seq))
+    }
+
+    // NOTE: This is a hack until wasm_bindgen is clever enough to send Vec<Seq>
+    pub fn from_js(val: JsValue) -> Result<Seq, String> {
+        try_from_js(val)
     }
 
     pub fn dna(seq: String) -> Result<Seq, String> {
