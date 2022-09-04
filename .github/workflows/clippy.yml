@@ -19,4 +19,4 @@ jobs:
       with:
         submodules: true
     - name: Clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      run: cargo clippy -- -D warnings
