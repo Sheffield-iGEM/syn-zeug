@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-bio = { path = "../rust-bio" }
+bio = { path = "../rust-bio", git = "https://github.com/TheLostLambda/rust-bio", branch = "main" }
 syn-zeug = { path = "../syn-zeug" }
 getrandom = { version = "0.2.7", features = ["js"] }
 wasm-bindgen = "0.2.82"
