@@ -100,6 +100,19 @@ impl Seq {
         serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
     }
 
+    pub fn find_orfs(&self, min_len: usize) -> Result<Vec<JsValue>, String> {
+        self.0
+            .find_orfs(min_len)
+            .map_err(|e| e.to_string())
+            .map(|orfs| {
+                orfs.iter()
+                    .map(|orf| {
+                        serde_wasm_bindgen::to_value(orf).expect("Failed to convert ORF to JsValue")
+                    })
+                    .collect()
+            })
+    }
+
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.0.to_string()
