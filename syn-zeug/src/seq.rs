@@ -13,6 +13,7 @@ use crate::{
 // TODO: All of the structs and impls in this file need a more logical ordering
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Error {
+    FindOrf(Kind),
     InvalidConversion(Kind, Kind),
     InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
@@ -147,11 +148,7 @@ impl Seq {
     // references / slices of the original data — that would help avoid the copying and allocation
     // done by `slice::to_vec` here
     pub fn subseq(&self, range: impl SliceIndex<[u8], Output = [u8]>) -> Self {
-        Self {
-            bytes: self.bytes[range].to_vec(),
-            kind: self.kind,
-            alphabet: self.alphabet,
-        }
+        Self::new_with_kind(&self.bytes[range], [self.kind], self.alphabet).unwrap()
     }
 
     pub fn rev(&self) -> Self {
@@ -238,29 +235,28 @@ impl Seq {
     }
 
     // TODO: Add parameters allowing the user to change which start and stop codons are used
-    // TODO: Needs benchmarking!
-    // TODO: Make this IUPAC aware?
-    // TODO: Write a function that allows to sequence to be compared, taking into account the IUPAC
-    // ambiguities!
-    // TODO: Codon table as nested match statements picking codons apart one base at a time?
-    // TODO: Write a function that takes a list of sequences, finds which bases are present in each
-    // position, unifies them into a few sequences with IUPAC placeholders, then expands the set to
-    // also include all IUPAC supersets. Takes a set of Base sequences, and adds to that set all
-    // IUPAC variations that are guaranteed to, no matter how their ambiguities are resolved, be an
-    // original sequence from the Base set. Would make a nice const fn!
-    // FIXME: Needs to check sequence kind
-    pub fn find_orfs(&self, min_len: usize) -> Vec<(Orf, Self)> {
-        let start_codons = vec![b"ATG"];
-        // TODO: Only use IUPAC if input is IUPAC?
-        let stop_codons = vec![b"TGA", b"TAG", b"TAA", b"TAR", b"TRA"];
+    pub fn find_orfs(&self, min_len: usize) -> Result<Vec<(Orf, Self)>, Error> {
+        if self.kind == Kind::Protein {
+            return Err(Error::FindOrf(self.kind));
+        }
+
         let min_len = min_len * 3;
+        let start_codons = vec![b"AUG"];
+        // OPTIMISATION: The longer this list, the slower the ORF search, so don't bother looking
+        // for IUPAC stop codons when the sequence isn't IUPAC. Looking for IUPAC codons is ~0.89
+        // times the speed of the shorter, non-IUPAC codon set
+        let stop_codons = if self.alphabet == Alphabet::Iupac {
+            vec![b"UGA", b"UAG", b"UAA", b"UAR", b"URA"]
+        } else {
+            vec![b"UGA", b"UAG", b"UAA"]
+        };
+
         // TODO: `orf::Finder::new()` should be changed to take `AsRef<[&[u8; 3]]>`
         let finder = orf::Finder::new(start_codons, stop_codons, min_len);
-
-        finder
-            .find_all(&self.bytes)
+        Ok(finder
+            .find_all(&self.convert(Kind::Rna)?.normalize_case(Case::Upper).bytes)
             .map(|orf| (orf, self.subseq(orf.start..orf.end)))
-            .collect()
+            .collect())
     }
 
     // ===== Terminal Tools ========================================================================
@@ -279,6 +275,7 @@ impl Seq {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::FindOrf(kind) => write!(f, "Cannot find ORFs in a {kind}")?,
             Error::InvalidConversion(from, to) => write!(f, "Cannot convert {from} to {to}")?,
             Error::InvalidSeq(kinds) => {
                 let kinds: Vec<_> = kinds.iter().map(|(k, a)| format!("{k} ({a})")).collect();
@@ -722,6 +719,22 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn update_subseq_alphabet() -> Result<(), Error> {
+        let seq = Seq::new("AGCTTTTCATTCTGACTGCSX")?;
+        assert_eq!(seq.kind(), Kind::Protein);
+        assert_eq!(seq.alphabet(), Alphabet::Iupac);
+        let seq = seq.subseq(..10);
+        assert_eq!(seq.len(), 10);
+        assert_eq!(seq.to_string(), "AGCTTTTCAT");
+        assert_eq!(seq.kind(), Kind::Protein);
+        assert_eq!(seq.alphabet(), Alphabet::Base);
+        let seq = Seq::new("AGCTTTTCAT")?;
+        assert_eq!(seq.kind(), Kind::Dna);
+        assert_eq!(seq.alphabet(), Alphabet::Base);
+        Ok(())
+    }
+
     // ===== Sequence Reversal Tool Tests ==========================================================
 
     #[test]
@@ -757,7 +770,7 @@ mod tests {
     // ===== ORF Finding + Translation Tool Tests ==================================================
 
     #[test]
-    fn find_orfs() -> Result<(), Error> {
+    fn find_orfs_dna() -> Result<(), Error> {
         let dna = Seq::dna(
             "AGCCATGTAGCTAACTCAGGTTACATGGGGATGACCCCGCGACTTGGA\
              TTAGAGTCTCTTTTGGAATAAGCCTGAATGATCCGAGTAGCATCTCAG",
@@ -789,7 +802,7 @@ mod tests {
                     Seq::dna("ATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
                 )
             ],
-            dna.find_orfs(1)
+            dna.find_orfs(1)?
         );
         assert_eq!(
             vec![
@@ -810,8 +823,171 @@ mod tests {
                     Seq::dna("ATGCTACTCGGATCATTCAGGCTTATTCCAAAAGAGACTCTAATCCAAGTCGCGGGGTCATCCCCATGTAACCTGAGTTAG")?
                 ),
             ],
-            dna.reverse_complement()?.find_orfs(1)
+            dna.reverse_complement()?.find_orfs(1)?
         );
+        Ok(())
+    }
+
+    #[test]
+    fn find_orfs_lowercase_dna() -> Result<(), Error> {
+        let dna = Seq::dna(
+            "agccatgtagctaactcaggttacatggggatgaccccgcgacttgga\
+             ttagagtctcttttggaataagcctgaatgatccgagtagcatctcag",
+        )?;
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 4,
+                        end: 10,
+                        offset: 1,
+                    },
+                    Seq::dna("atgtag")?
+                ),
+                (
+                    Orf {
+                        start: 24,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("atggggatgaccccgcgacttggattagagtctcttttggaataa")?
+                ),
+                (
+                    Orf {
+                        start: 30,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::dna("atgaccccgcgacttggattagagtctcttttggaataa")?
+                )
+            ],
+            dna.find_orfs(1)?
+        );
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 70,
+                        end: 76,
+                        offset: 1,
+                    },
+                    Seq::dna("atgtaa")?
+                ),
+                (
+                    Orf {
+                        start: 5,
+                        end: 86,
+                        offset: 2,
+                    },
+                    Seq::dna("atgctactcggatcattcaggcttattccaaaagagactctaatccaagtcgcggggtcatccccatgtaacctgagttag")?
+                ),
+            ],
+            dna.reverse_complement()?.find_orfs(1)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn find_orfs_rna() -> Result<(), Error> {
+        let rna = Seq::rna(
+            "AGCCAUGUAGCUAACUCAGGUUACAUGGGGAUGACCCCGCGACUUGGA\
+             UUAGAGUCUCUUUUGGAAUAAGCCUGAAUGAUCCGAGUAGCAUCUCAG",
+        )?;
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 4,
+                        end: 10,
+                        offset: 1,
+                    },
+                    Seq::rna("AUGUAG")?
+                ),
+                (
+                    Orf {
+                        start: 24,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::rna("AUGGGGAUGACCCCGCGACUUGGAUUAGAGUCUCUUUUGGAAUAA")?
+                ),
+                (
+                    Orf {
+                        start: 30,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::rna("AUGACCCCGCGACUUGGAUUAGAGUCUCUUUUGGAAUAA")?
+                )
+            ],
+            rna.find_orfs(1)?
+        );
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 70,
+                        end: 76,
+                        offset: 1,
+                    },
+                    Seq::rna("AUGUAA")?
+                ),
+                (
+                    Orf {
+                        start: 5,
+                        end: 86,
+                        offset: 2,
+                    },
+                    Seq::rna("AUGCUACUCGGAUCAUUCAGGCUUAUUCCAAAAGAGACUCUAAUCCAAGUCGCGGGGUCAUCCCCAUGUAACCUGAGUUAG")?
+                ),
+            ],
+            rna.reverse_complement()?.find_orfs(1)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn find_orfs_iupac_rna() -> Result<(), Error> {
+        let rna = Seq::rna_iupac(
+            "AGCCAUGUARCUAACUCAGGUUACAUGGGGAUGACCCCGCGACUUGGA\
+             UUAGAGUCUCUUUUGGAAURAGCCUGAAUGAUCCGAGUAGCAUCUCAG",
+        )?;
+        assert_eq!(
+            vec![
+                (
+                    Orf {
+                        start: 4,
+                        end: 10,
+                        offset: 1,
+                    },
+                    Seq::rna_iupac("AUGUAR")?
+                ),
+                (
+                    Orf {
+                        start: 24,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::rna_iupac("AUGGGGAUGACCCCGCGACUUGGAUUAGAGUCUCUUUUGGAAURA")?
+                ),
+                (
+                    Orf {
+                        start: 30,
+                        end: 69,
+                        offset: 0,
+                    },
+                    Seq::rna_iupac("AUGACCCCGCGACUUGGAUUAGAGUCUCUUUUGGAAURA")?
+                )
+            ],
+            rna.find_orfs(1)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn find_orfs_protein() -> Result<(), Error> {
+        let protein = Seq::protein("MAMAPRTEINSTRING*")?;
+        assert_eq!(Err(Error::FindOrf(Kind::Protein)), protein.find_orfs(1));
         Ok(())
     }
 
@@ -840,7 +1016,7 @@ mod tests {
                     Seq::dna("ATGACCCCGCGACTTGGATTAGAGTCTCTTTTGGAATAA")?
                 )
             ],
-            dna.find_orfs(12)
+            dna.find_orfs(12)?
         );
         assert_eq!(
             vec![
@@ -853,7 +1029,7 @@ mod tests {
                     Seq::dna("ATGCTACTCGGATCATTCAGGCTTATTCCAAAAGAGACTCTAATCCAAGTCGCGGGGTCATCCCCATGTAACCTGAGTTAG")?
                 ),
             ],
-            dna.reverse_complement()?.find_orfs(12)
+            dna.reverse_complement()?.find_orfs(12)?
         );
         Ok(())
     }
@@ -864,7 +1040,7 @@ mod tests {
     fn self_conversions() -> Result<(), Error> {
         let dna = Seq::dna("GATGGAACTTGACTACGTAAATT")?;
         let rna = Seq::rna("AGCUUUUCAUUCUGACUGCA")?;
-        let protein = Seq::protein("MAMAPRTEINSTRING")?;
+        let protein = Seq::protein("MAMAPRTEINSTRING*")?;
         assert_eq!(dna, dna.convert(Kind::Dna)?);
         assert_eq!(rna, rna.convert(Kind::Rna)?);
         assert_eq!(protein, protein.convert(Kind::Protein)?);
@@ -1194,6 +1370,10 @@ mod tests {
 
     #[test]
     fn format_errors() {
+        assert_eq!(
+            &Error::FindOrf(Kind::Protein).to_string(),
+            "Cannot find ORFs in a Protein"
+        );
         assert_eq!(
             &Error::InvalidConversion(Kind::Protein, Kind::Dna).to_string(),
             "Cannot convert Protein to DNA"

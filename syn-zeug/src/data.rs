@@ -20,7 +20,7 @@ pub const ALPHABETS: [(Kind, Alphabet); 8] = [
     (Kind::Protein, Alphabet::Iupac),
 ];
 
-// TODO: I might need to add a gap character (`.` or `-`) to these alphabets someday
+// NOTE: I might need to add a gap character (`.` or `-`) to these alphabets someday
 pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet>> =
     Lazy::new(|| {
         let stop_codon = bio::alphabets::Alphabet::new(b"*");
@@ -74,7 +74,7 @@ pub const IUPAC_RNA: Map<u8, &[u8]> = phf_map! {
     b'N' => b"ACGURYSWKMBDHV",
 };
 
-// TODO: Don't know if I should use Biopython's definition or the smaller rust-bio version with
+// NOTE: Don't know if I should use Biopython's definition or the smaller rust-bio version with
 // just B, Z, and X added
 pub const IUPAC_PROTEIN: Map<u8, &[u8]> = phf_map! {
     b'B' => b"DN",

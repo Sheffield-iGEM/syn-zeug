@@ -20,7 +20,7 @@ fn new_best(c: &mut Criterion) {
     );
 }
 
-// TODO: Make this the actual worst case?
+// NOTE: No longer the real worst case for this algorithm
 fn new_worst(c: &mut Criterion) {
     bench_time_complexity(
         c,
@@ -107,11 +107,17 @@ fn reverse_complement(c: &mut Criterion) {
     );
 }
 
+fn find_orfs(c: &mut Criterion) {
+    bench_method(c, "find_orfs", "rosalind_orf.txt", Seq::dna, |seq| {
+        seq.find_orfs(1)
+    });
+}
+
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
     targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
-              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement
+              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs
 );
 criterion_main!(benches);
 
