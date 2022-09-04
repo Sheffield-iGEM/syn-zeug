@@ -42,7 +42,6 @@ pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet
         ])
     });
 
-// TODO: Write a test for the sub/superset properties here!
 pub const IUPAC_DNA: Map<u8, &[u8]> = phf_map! {
     b'R' => b"AG",
     b'Y' => b"CT",
@@ -84,8 +83,7 @@ pub const IUPAC_PROTEIN: Map<u8, &[u8]> = phf_map! {
     b'X' => b"ABCDEFGHIKLMNPQRSTVWYZ",
 };
 
-// TODO: Rename this to: IUPAC_CODON_TABLE and only use when needed!
-pub static CODON_TABLE: Lazy<HashMap<Vec<u8>, u8>> = Lazy::new(|| {
+pub static IUPAC_CODON_TABLE: Lazy<HashMap<Vec<u8>, u8>> = Lazy::new(|| {
     let residue_codons = |(codon, residue)| -> Vec<_> {
         expand_iupac(codon, &IUPAC_RNA)
             .into_iter()
@@ -130,7 +128,7 @@ pub static CODON_TABLE: Lazy<HashMap<Vec<u8>, u8>> = Lazy::new(|| {
     table
 });
 
-pub const OLD_CODON_TABLE: Map<&[u8], u8> = phf_map! {
+pub const CODON_TABLE: Map<&[u8], u8> = phf_map! {
     b"UUU" => b'F',
     b"UUC" => b'F',
     b"UUA" => b'L',
@@ -218,8 +216,17 @@ mod tests {
 
     #[test]
     fn codon_table_right_size() {
-        assert_eq!(CODON_TABLE.len(), 3375);
+        assert_eq!(CODON_TABLE.len(), 64);
         let mut values: Vec<_> = CODON_TABLE.values().collect();
+        values.sort_unstable();
+        values.dedup();
+        assert_eq!(values.len(), 21);
+    }
+
+    #[test]
+    fn iupac_codon_table_right_size() {
+        assert_eq!(IUPAC_CODON_TABLE.len(), 3375);
+        let mut values: Vec<_> = IUPAC_CODON_TABLE.values().collect();
         values.sort_unstable();
         values.dedup();
         assert_eq!(values.len(), 24);

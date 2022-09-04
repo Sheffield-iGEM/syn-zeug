@@ -87,6 +87,16 @@ fn dna_to_protein(c: &mut Criterion) {
     );
 }
 
+fn iupac_dna_to_protein(c: &mut Criterion) {
+    bench_method(
+        c,
+        "iupac_dna_to_protein",
+        "rosalind_prot_iupac_dna.txt",
+        Seq::dna_iupac,
+        |seq| seq.convert(Kind::Protein),
+    );
+}
+
 fn reverse_complement(c: &mut Criterion) {
     bench_method(
         c,
@@ -100,9 +110,8 @@ fn reverse_complement(c: &mut Criterion) {
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
-    targets = dna_to_protein
-    // targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
-    //           rna_to_protein, dna_to_protein, reverse_complement
+    targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
+              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement
 );
 criterion_main!(benches);
 
