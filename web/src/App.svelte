@@ -1,31 +1,42 @@
 <script lang="ts">
   import { Seq } from "biobox";
-  import Logo from '../Logo.svg';
-  
+  import Logo from "../Logo.svg";
+
   let dna = "";
   let input = "";
-  let searched = '';
+  let searched = "";
   let darkBg = true;
   let seq = null; // TODO: Add a real type!
-  const storageSize = 1000
-  let display = false
+  const storageSize = 1000;
+  let display = false;
 
   let functions = [
-    { name: "Reverse Complement", functionality : (o) => o.reverse_complement().to_string()},
-    { name: "Sequence Length", functionality :  (o) => o.len()},
-    { name: "Reverse Sequence", functionality :  (o) => o.rev().to_string()},
-    { name: "Count Sequence Elements (Bases / Residues)", functionality :  (o) => JSON.stringify([...o.count_elements().entries()])},
-    { name: "Sequence Conversion (DNA -> RNA)", functionality :  (o) => o.convert("Rna").to_string()},
-    { name: "Type", functionality : (o) => `${o.kind()} (${o.alphabet()})`},
+    {
+      name: "Reverse Complement",
+      functionality: (o) => o.reverse_complement().to_string(),
+    },
+    { name: "Sequence Length", functionality: (o) => o.len() },
+    { name: "Reverse Sequence", functionality: (o) => o.rev().to_string() },
+    {
+      name: "Count Sequence Elements (Bases / Residues)",
+      functionality: (o) => JSON.stringify([...o.count_elements().entries()]),
+    },
+    {
+      name: "Sequence Conversion (DNA -> RNA)",
+      functionality: (o) => o.convert("Rna").to_string(),
+    },
+    { name: "Type", functionality: (o) => `${o.kind()} (${o.alphabet()})` },
   ];
 
-  let chanableFunctions = [ 
-    { name : "this", functionality : (o) => null },
-    { name : "that", functionality : (o) => null },
-  ]
+  let chanableFunctions = [
+    { name: "this", functionality: (o) => null },
+    { name: "that", functionality: (o) => null },
+  ];
 
-
-  let pipeline = ["No tool selected", [{ name: "No tool selected", functionality : (o) => null}]];
+  let pipeline = [
+    "No tool selected",
+    [{ name: "No tool selected", functionality: (o) => null }],
+  ];
 
   $: input = dna;
   $: try {
@@ -37,17 +48,17 @@
 
   const handleDisplay = () => {
     chanableFunctions.forEach((func) => {
-      let functions = document.getElementsByClassName('functions')
+      let functions = document.getElementsByClassName("functions");
       for (let f of functions) {
         if (func.name == f.innerText) {
-          f.classList.toggle('inactive',display)
-          f.children.item(0).classList.toggle('inactive',display)
+          f.classList.toggle("inactive", display);
+          f.children.item(0).classList.toggle("inactive", display);
         }
       }
-    })
+    });
 
-    display = !display
-  }
+    display = !display;
+  };
 
   const handleCopy = () => {
     let elem = document.createElement("textarea");
@@ -56,55 +67,120 @@
     elem.select();
     document.execCommand("copy");
     document.body.removeChild(elem);
-  }
+  };
 
   const handleExport = () => {
     let elem = document.createElement("textarea");
     document.body.appendChild(elem);
 
-    let itemsToRetrieve = []
+    let itemsToRetrieve = [];
     for (let i = 0; i < storageSize; i++) {
       try {
-        itemsToRetrieve.push(JSON.parse(localStorage.getItem(localStorage.key(i))))
-      } catch(e) {
-        console.log(e)
+        itemsToRetrieve.push(
+          JSON.parse(localStorage.getItem(localStorage.key(i)))
+        );
+      } catch (e) {
+        console.log(e);
       }
     }
-    itemsToRetrieve = itemsToRetrieve.filter(item => item !== null)
-    console.log(itemsToRetrieve)
+    itemsToRetrieve = itemsToRetrieve.filter((item) => item !== null);
+    console.log(itemsToRetrieve);
     elem.value = JSON.stringify(itemsToRetrieve);
     elem.select();
     document.execCommand("copy");
     document.body.removeChild(elem);
-  }
+  };
 
   const handleSave = () => {
     const timeElapsed = Date.now();
-    const today = new Date(timeElapsed)
-    const output = { time : today, name : pipeline[0], outputText : pipeline[1][0].functionality(seq) }
-    localStorage.setItem(output.name,JSON.stringify(output))
-    console.log('Output has been saves to local storage',output)
-  }
+    const today = new Date(timeElapsed);
+    const output = {
+      time: today,
+      name: pipeline[0],
+      outputText: pipeline[1][0].functionality(seq),
+    };
+    localStorage.setItem(output.name, JSON.stringify(output));
+    console.log("Output has been saves to local storage", output);
+  };
 
   const handleBgChange = () => {
-    const bodyElement = document.querySelector('body')
-    bodyElement.classList.toggle('light', !darkBg)
-    darkBg = !darkBg
+    const bodyElement = document.querySelector("body");
+    bodyElement.classList.toggle("light", !darkBg);
+    darkBg = !darkBg;
+  };
 
-  }
-  
   const handleSelectedTool = (e) => {
-      let name = e.target.innerText;
-      pipeline = [name, functions.filter(func => func.name == name)];
-      console.log(pipeline[1][0])
+    let name = e.target.innerText;
+    pipeline = [name, functions.filter((func) => func.name == name)];
+    console.log(pipeline[1][0]);
+  };
+
+  //TODO: create the make tools draggable events on each function
+
+  //-------------------- make the tools draggable---------------------
+  const makeToolsDraggable = () => {
+    const fill = document.querySelector(".fill");
+    const empties = document.querySelectorAll(".empty");
+    const newFill = document.querySelector(".new-fill");
+
+    // Drag Functions
+
+    const dragStart = () => {
+      console.log('clicked')
+      this.className += " hold";
+      setTimeout(() => (this.className = "invisible"), 0); // to pull element out of the box
     };
 
+    const dragEnd = () => {
+      this.className = "fill";
+    };
+
+    const dragOver = (e) => {
+      e.preventDefault(); // this to enable dragDrop to be called
+    };
+
+    const dragEnter = (e) => {
+      e.preventDefault();
+      this.className += " hovered"; // append the hover class
+    };
+
+    const dragLeave = () => {
+      this.className = "empty"; //TODO: if the element has already other classes append empty
+    };
+
+    const dragDrop = () => {
+      this.className = "empty"; //TODO: if the element has already other classes append empty
+      this.append(newFill);
+    };
+
+    // Fill listeners
+    fill.addEventListener("dragstart", dragStart);
+    fill.addEventListener("dragend", dragEnd);
+
+    // Loop through empty boxes and add listeners
+    for (const empty of empties) {
+      empty.addEventListener("dragover", dragOver);
+      empty.addEventListener("dragenter", dragEnter);
+      empty.addEventListener("dragleave", dragLeave);
+      empty.addEventListener("drop", dragDrop);
+    }
+  };
+  //-----------------------------------------------------------------
+
+  setTimeout(() => {
+    makeToolsDraggable();
+  }, 0);
 </script>
 
 <main>
   <nav class="nav-grid">
     <div class="site-title">
-      <img src={Logo} alt="University of Sheffield iGEM Logo" class="logo" on:click={handleBgChange} />
+      <img
+        src={Logo}
+        alt="University of Sheffield iGEM Logo"
+        class="logo"
+        on:click={handleBgChange}
+      />
     </div>
     <ul class="nav-links flex-row">
       <li><a href="#">About</a></li>
@@ -122,25 +198,53 @@
             type="search"
             name="search-function"
             placeholder="Search a function.."
-            bind:value={searched}         
-            />
+            bind:value={searched}
+          />
         </div>
         <!-- TODO: change this to have the functions you want popping up from the top
         this can be done by filtering the functions list into a filtered functions array 
         and then view only the filtered functions array
          -->
         {#each functions as func}
-        <div class='{(func.name.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' on:click={(e) => handleSelectedTool(e)}>
-          <a class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
-        </div>
+          <div
+            class={func.name.includes(searched) || searched == ""
+              ? "functions fill"
+              : "functions inactive fill"}
+            on:click={(e) => handleSelectedTool(e)}
+          >
+            <a
+              class={func.name.includes(searched) || searched == ""
+                ? ""
+                : "inactive"}>{func.name}</a
+            >
+          </div>
         {/each}
-        <div class='{('Chanable Functions'.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' id="chanable-functions" on:click={handleDisplay}>
-          <a class='{('Chanable Functions'.includes(searched)|| searched == '') ? '' : 'inactive'}'>Chanable Functions</a>
-        </div>        
-        {#each chanableFunctions as func}
-        <div class='{(func.name.includes(searched) || searched == '') ? 'functions' : 'functions inactive'}' on:click={(e) => handleSelectedTool(e)}>
-          <a class='{(func.name.includes(searched)|| searched == '') ? '' : 'inactive'}'>{func.name}</a>
+        <div
+          class={"Chanable Functions".includes(searched) || searched == ""
+            ? "functions"
+            : "functions inactive"}
+          id="chanable-functions"
+          on:click={handleDisplay}
+        >
+          <a
+            class={"Chanable Functions".includes(searched) || searched == ""
+              ? ""
+              : "inactive"}>Chanable Functions</a
+          >
         </div>
+        {#each chanableFunctions as func}
+          <div
+            class={func.name.includes(searched) || searched == ""
+              ? "functions"
+              : "functions inactive"}
+            on:click={(e) => handleSelectedTool(e)}
+          >
+            <a
+              class={func.name.includes(searched) || searched == ""
+                ? ""
+                : "inactive"}>{func.name}</a
+            >
+          </div>
         {/each}
       </div>
     </div>
@@ -166,7 +270,7 @@
           <p>Input</p>
           <i class="fas fa-folder-plus" />
           <i class="fas fa-upload" />
-          <i class="fas fa-trash" on:click={() => dna = ""}/>
+          <i class="fas fa-trash" on:click={() => (dna = "")} />
         </div>
         <textarea
           bind:value={dna}
@@ -177,12 +281,13 @@
         />
         <div class="title grid-title">
           <p>Output</p>
-          <i class="fas fa-save" on:click={handleSave}/>
-          <i class="fas fa-copy" on:click={handleCopy}/>
-          <i class="fas fa-reply-all" on:click={handleExport}/>
+          <i class="fas fa-save" on:click={handleSave} />
+          <i class="fas fa-copy" on:click={handleCopy} />
+          <i class="fas fa-reply-all" on:click={handleExport} />
         </div>
         <textarea name="output" class="text-area" cols="30" rows="10"
-          >{`${pipeline[0]}: ${pipeline[1][0].functionality(seq)}`}</textarea>
+          >{`${pipeline[0]}: ${pipeline[1][0].functionality(seq)}`}</textarea
+        >
       </div>
     </div>
   </div>
@@ -225,8 +330,9 @@
     --secondary-font-color: red;
     --primary-font-size: 1.3rem;
     --primary-font-weight: 600;
-    --secondary-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    --secondary-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+      sans-serif;
     --primary-color: white;
     --secondary-color: #62839c;
     --tertiary-color: #62839c;
@@ -254,9 +360,10 @@
   }
 
   .logo {
-    width: 40px; margin-top: 10px;
+    width: 40px;
+    margin-top: 10px;
   }
-  
+
   .grid-title {
     display: grid;
     grid-template-columns: 82% 6% 6% 6%;
@@ -429,6 +536,47 @@
   }
   .nav-links a:hover {
     border-bottom: 1px solid white;
+  }
+  /*----------------------------copied components-----------------------------------*/
+
+  .fill {
+    cursor: pointer;
+    position: relative;
+    top: 5px;
+    left: 5px;
+  }
+
+  /* this is if you want to drag fill element out of its box  */
+  .invisible {
+    display: none;
+  }
+
+  /* to modify the look of the element on hold and hover  */
+  .hold {
+    border: solid #ccc 4px;
+  }
+
+  .hovered {
+    background: #f4f4f4;
+    border-style: dashed;
+  }
+
+  .empty {
+    display: inline-block;
+    height: 160px;
+    width: 160px;
+    margin: 10px;
+    border: solid 3px salmon;
+    background: white;
+  }
+
+  .new-fill {
+    cursor: pointer;
+    position: relative;
+    height: 350px;
+    width: 250px;
+    top: 5px;
+    left: 5px;
   }
 
   @keyframes fade-in-bottom-right {
