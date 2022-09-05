@@ -273,13 +273,13 @@ impl Seq {
 
     // I'm making the assumption that this tool is intended to be used as a 'terminal tool' as the
     // issue states its return value as 'f64' and all 'chainable tools' are Results
-    // TODO
+    // TODO -> IUPAC SUPPORT!!!
     pub fn gc_content(&self) -> f64 {
         // I think a match statement on the alphabet of the Seq to add IUPAC support? Is this
         // unnecessary?
         let counts = self.count_elements();
         let gc_content = (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64;
-        gc_content * 100.0
+        gc_content
     }
 }
 
