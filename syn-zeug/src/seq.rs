@@ -781,11 +781,20 @@ mod tests {
     // ===== GC Content Tool Tests =================================================================
     // TODO
     #[test]
-    fn simple_test() -> Result<(), Error> {
+    fn gc_cont_simple() -> Result<(), Error> {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGCGCGCGCGCGCGCGCGCGCGCGGCGCGCGCGCGG")?;
         let gc = dna.gc_content();
         assert_eq!(gc, 50.0);
+        Ok(())
+    }
+
+    #[test]
+    fn gc_cont_missing_val() -> Result<(), Error> {
+        let dna =
+            Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")?;
+        let gc = dna.gc_content();
+        assert_eq!(gc, 0.0);
         Ok(())
     }
 
