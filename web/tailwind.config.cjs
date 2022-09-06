@@ -5,7 +5,12 @@ const config = {
   ],
 
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        "plex": ["IBM Plex Sans", "font-serif"],
+        "plex-mono": ["IBM Plex Mono", "font-mono"]
+      }
+    },
   },
 
   plugins: [
