@@ -17,6 +17,7 @@ pub enum Error {
     InvalidConversion(Kind, Kind),
     InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
+    GCCont(Kind),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -271,20 +272,23 @@ impl Seq {
         counts
     }
 
-    // TODO - check
-    pub fn gc_content(&self) -> f64 {
+    // TODO -
+    // Benchmark to check if match statement is required
+    // Add more tests
+    pub fn gc_content(&self) -> Result<f64, Error> {
+        if self.kind == Kind::Protein {
+            return Err(Error::GCCont(self.kind));
+        }
+
         let counts = self.normalize_case(Case::Upper).count_elements();
-        let gc_content: f64 = match self.alphabet {
+        let gc = match self.alphabet {
             Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64,
-            _ => {
-                IUPAC_GC_PROBS
+            _ => IUPAC_GC_PROBS
                     .into_iter()
                     .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
                 / self.bytes.len() as f64
-            },
-
         };
-        gc_content
+        Ok(gc)
     }
 }
 
@@ -299,6 +303,7 @@ impl fmt::Display for Error {
                 write!(f, "The provided sequence was not valid {kinds}")?;
             }
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
+            Error::GCCont(kind) => write!(f, "Cannot provide GC content for {kind}")?,
         }
         Ok(())
     }
