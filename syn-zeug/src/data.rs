@@ -210,6 +210,21 @@ pub const CODON_TABLE: Map<&[u8], u8> = phf_map! {
     b"GGG" => b'G',
 };
 
+pub const IUPAC_GC_PROBS: Map<u8, f64> = phf_map! {
+    b'C' => 1.0,
+    b'G' => 1.0,
+    b'S' => 1.0,
+    b'M' => 0.5,
+    b'K' => 0.5,
+    b'R' => 0.5,
+    b'Y' => 0.5,
+    b'B' => 2.0/3.0,
+    b'D' => 1.0/3.0,
+    b'H' => 1.0/3.0,
+    b'V' => 2.0/3.0,
+    b'N' => 0.25,
+};
+
 #[cfg(test)]
 mod tests {
     use super::*;
