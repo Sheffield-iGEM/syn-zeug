@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, slice::SliceIndex, str};
 
 use crate::{
-    data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE, IUPAC_CODON_TABLE},
+    data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE, IUPAC_CODON_TABLE, IUPAC_GC_PROBS},
     types::{ByteMap, Case},
 };
 
@@ -271,14 +271,19 @@ impl Seq {
         counts
     }
 
-    // I'm making the assumption that this tool is intended to be used as a 'terminal tool' as the
-    // issue states its return value as 'f64' and all 'chainable tools' are Results
-    // TODO -> IUPAC SUPPORT!!!
+    // TODO
     pub fn gc_content(&self) -> f64 {
-        // I think a match statement on the alphabet of the Seq to add IUPAC support? Is this
-        // unnecessary?
         let counts = self.count_elements();
-        let gc_content = (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64;
+        let gc_content: f64 = match self.alphabet {
+            Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64
+            _ => {
+                IUPAC_GC_PROBS
+                    .into_iter()
+                    .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
+                / self.bytes.len() as f64
+            },
+
+        };
         gc_content
     }
 }
@@ -795,6 +800,14 @@ mod tests {
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")?;
         let gc = dna.gc_content();
         assert_eq!(gc, 0.0);
+        Ok(())
+    }
+
+    #[test]
+    fn gc_cont_iupac() -> Result<(), Error> {
+        let dna = Seq::dna_iupac("GCNS")?;
+        let gc = dna.gc_content();
+        assert_eq!(gc, 0.8125);
         Ok(())
     }
 
