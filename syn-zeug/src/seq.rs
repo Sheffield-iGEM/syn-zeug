@@ -271,9 +271,9 @@ impl Seq {
         counts
     }
 
-    // TODO
+    // TODO - check
     pub fn gc_content(&self) -> f64 {
-        let counts = self.count_elements();
+        let counts = self.normalize_case(Case::Upper).count_elements();
         let gc_content: f64 = match self.alphabet {
             Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64,
             _ => {
