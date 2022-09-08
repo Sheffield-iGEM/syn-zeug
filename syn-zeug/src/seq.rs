@@ -819,9 +819,9 @@ mod tests {
 
     #[test]
     fn gc_cont_lower_case() -> Result<(), Error> {
-        let dna = Seq::dna_iupac("cgbdnhrykm")?;
-        let gc = dna.gc_content();
-        assert_eq!(gc, 0.0);
+        let dna = Seq::dna_iupac("cgbdnsrykm")?;
+        let gc = dna.gc_content()?;
+        assert_eq!(gc, 0.625);
         Ok(())
     }
 
