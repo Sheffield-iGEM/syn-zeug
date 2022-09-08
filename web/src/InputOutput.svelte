@@ -33,3 +33,9 @@
     >
   </div>
 </div>
+
+<style>
+  #IO .grid-title {
+    background-color: rgb(229,231,235);
+  }
+</style>

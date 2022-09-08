@@ -23,23 +23,23 @@
       <!-- {#each recipeOperations as recipe}
         <RecipeFunctions functionName={recipe} />
       {/each} -->
-      <Card class="flex justify-center align-center bg-green-300">
+      <Card class="flex justify-center align-center">
         <div class="flex justify-between w-[250px] align-center m-4">
-          <p class="text-white ">Function Name</p>
+          <p>Function Name</p>
           <i class="fa fa-power-off" />
         </div>
-          <Button
-          class="bg-green-500"
-            size="base"
-            color="text-white"
-            ring="ring-transparent"
-            weight="ring-none"
-            rounded="rounded-lg"
-            width="w-auto"
-            disabled={false}
-          >
-            <svelte:fragment slot="lead">See Example</svelte:fragment>
-      </Button>
+        <Button
+          class="bg-green-400"
+          size="base"
+          color="text-white"
+          ring="ring-transparent"
+          weight="ring-none"
+          rounded="rounded-lg"
+          width="w-auto"
+          disabled={false}
+        >
+          <svelte:fragment slot="lead">See Example</svelte:fragment>
+        </Button>
       </Card>
     </div>
   </div>
