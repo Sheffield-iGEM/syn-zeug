@@ -261,7 +261,7 @@ impl Seq {
     }
 
     // TODO -
-    // Benchmark to check if match statement is required
+    // Benchmarking
     // Add more tests
     pub fn gc_content(&self) -> Result<f64, Error> {
         if self.kind == Kind::Protein {

@@ -113,11 +113,32 @@ fn find_orfs(c: &mut Criterion) {
     });
 }
 
+fn gc_cont_base(c: &mut Criterion) {
+    bench_method(
+        c,
+        "gc_cont_base",
+        "rosalind_dna.txt",
+        Seq::dna,
+        Seq::gc_content
+    );
+}
+
+fn gc_cont_iupac(c: &mut Criterion) {
+    bench_method(
+        c,
+        "gc_cont_iupac",
+        "rosalind_prot_iupac_dna.txt",
+        Seq::dna_iupac,
+        Seq::gc_content,
+    )
+}
+
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
     targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
-              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs
+              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs,
+              gc_cont_base, gc_cont_iupac
 );
 criterion_main!(benches);
 
