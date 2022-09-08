@@ -260,18 +260,6 @@ impl Seq {
             .collect())
     }
 
-    // ===== Terminal Tools ========================================================================
-
-    // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
-    // the equivalent (and more canonical) code written using `HashMap` and the `Entry` API
-    pub fn count_elements(&self) -> ByteMap<usize> {
-        let mut counts = ByteMap::default();
-        for &b in &self.bytes {
-            counts[b] += 1;
-        }
-        counts
-    }
-
     // TODO -
     // Benchmark to check if match statement is required
     // Add more tests
@@ -284,12 +272,25 @@ impl Seq {
         let gc = match self.alphabet {
             Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64,
             _ => IUPAC_GC_PROBS
-                    .into_iter()
-                    .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
+                .into_iter()
+                .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
                 / self.bytes.len() as f64
         };
         Ok(gc)
     }
+
+    // ===== Terminal Tools ========================================================================
+
+    // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
+    // the equivalent (and more canonical) code written using `HashMap` and the `Entry` API
+    pub fn count_elements(&self) -> ByteMap<usize> {
+        let mut counts = ByteMap::default();
+        for &b in &self.bytes {
+            counts[b] += 1;
+        }
+        counts
+    }
+
 }
 
 impl fmt::Display for Error {
@@ -794,7 +795,7 @@ mod tests {
     fn gc_cont_simple() -> Result<(), Error> {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGCGCGCGCGCGCGCGCGCGCGCGGCGCGCGCGCGG")?;
-        let gc = dna.gc_content();
+        let gc = dna.gc_content()?;
         assert_eq!(gc, 50.0);
         Ok(())
     }
@@ -803,7 +804,7 @@ mod tests {
     fn gc_cont_missing_val() -> Result<(), Error> {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")?;
-        let gc = dna.gc_content();
+        let gc = dna.gc_content()?;
         assert_eq!(gc, 0.0);
         Ok(())
     }
@@ -811,8 +812,16 @@ mod tests {
     #[test]
     fn gc_cont_iupac() -> Result<(), Error> {
         let dna = Seq::dna_iupac("GCNS")?;
-        let gc = dna.gc_content();
+        let gc = dna.gc_content()?;
         assert_eq!(gc, 0.8125);
+        Ok(())
+    }
+
+    #[test]
+    fn gc_cont_lower_case() -> Result<(), Error> {
+        let dna = Seq::dna_iupac("cgbdnhrykm")?;
+        let gc = dna.gc_content();
+        assert_eq!(gc, 0.0);
         Ok(())
     }
 
