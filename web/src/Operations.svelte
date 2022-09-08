@@ -1,5 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { Card } from "@brainandbones/skeleton";
+  import { Divider } from "@brainandbones/skeleton";
+  import { SlideToggle } from "@brainandbones/skeleton";
+  import { Tooltip } from "@brainandbones/skeleton";
+  import { Button } from "@brainandbones/skeleton";
+  import { AccordionGroup, AccordionItem } from "@brainandbones/skeleton";
 
   export let searched = "";
   export let functions = [
@@ -8,6 +14,11 @@
       functionality: (o) => o.reverse_complement().to_string(),
     },
   ];
+
+  let activeFunctions = functions.map((func) => {
+    return { myValue: false };
+  });
+
   export let handleSelectedTool = (val) => console.log(val);
   export let onFunctionDropped = (val) => console.log(val);
 
@@ -23,36 +34,65 @@
 
 <div id="operations">
   <div class="flex-column">
-    <div class="title">Operations</div>
-    <div class="search-functions">
-      <input
-        id="search"
-        type="search"
-        name="search-function"
-        placeholder="Search a function.."
-        bind:value={searched}
-      />
-    </div>
-    <!-- TODO: change this to have the functions you want popping up from the top
-          this can be done by filtering the functions list into a filtered functions array 
-          and then view only the filtered functions array
-           -->
-    {#each functions as func}
-      <div
-        draggable="true"
-        class={func.name.includes(searched) || searched == ""
-          ? "functions"
-          : "functions inactive"}
-        on:click={(e) => handleSelectedTool(e)}
-      >
-        <p
-          class={func.name.includes(searched) || searched == ""
-            ? ""
-            : "inactive"}
-        >
-          {func.name}
-        </p>
-      </div>
-    {/each}
+    <AccordionGroup>
+      <Card>
+        <AccordionItem open>
+          <svelte:fragment slot="summary">Chainable Functions</svelte:fragment>
+          <svelte:fragment slot="content">
+
+            {#each functions as func}
+              <div class="functions-grid">
+                <div class="m-4 func">
+                  <Tooltip
+                    background="bg-accent-500"
+                    color="text-primary-200"
+                    width="w-[300px]"
+                    whitespace="whitespace-normal"
+                    rounded="rounded-xl"
+                    duration={0}
+                  >
+                    <svelte:fragment slot="message">
+                      <h3 class="mb-1">Hello, Skeleton 💀</h3>
+                      <span class="text-xs text-white/60"
+                        >Lorem ipsum dolor sit, amet consectetur adipisicing
+                        elit. Obcaecati id atque laboriosam provident eum
+                        facere, architecto veniam.</span
+                      >
+                    </svelte:fragment>
+                    <svelte:fragment slot="content">
+                      <p on:click={() => handleSelectedTool(func.name)}>
+                        {func.name}
+                      </p>
+                    </svelte:fragment>
+                  </Tooltip>
+                </div>
+
+                <SlideToggle
+                  class="m-2"
+                  bind:checked={activeFunctions[functions.indexOf(func)]
+                    .myValue}
+                  size="sm"
+                  accent="bg-primary-500"
+                />
+
+                <Divider />
+
+              </div>
+            {/each}
+          </svelte:fragment>
+        </AccordionItem>
+      </Card>
+    </AccordionGroup>
   </div>
 </div>
+
+<style>
+  .functions-grid {
+    display: grid;
+    grid-template-columns: 70% 30%;
+  }
+
+  .func {
+    cursor: pointer;
+  }
+</style>

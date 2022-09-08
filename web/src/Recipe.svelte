@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Button from '@smui/button';
-  import { onMount } from "svelte";
+  import { Button, Card } from "@brainandbones/skeleton";
+import { onMount } from "svelte";
   import RecipeFunctions from "./RecipeFunctions.svelte";
 
   export let recipeFunctions = ["this", "that"];
@@ -15,24 +15,23 @@
       onChangeFunctionDroppedFlag();
     });
   });
-  
 </script>
 
 <div id="recipe">
   <div class="flex-column">
     <div class="title grid-title">
-      <p>Recipe</p>
-      <i class="fas fa-save" />
-      <i class="fas fa-folder" />
-      <i class="fas fa-trash" />
     </div>
-    <div name="recipe" class="text-area">
-      {#each recipeOperations as recipe}
+    <div>
+      <!-- {#each recipeOperations as recipe}
         <RecipeFunctions functionName={recipe} />
-      {/each}
-    </div>
-    <div class="controls flex-row">
-      <Button>Verbose Recipe</Button>
+      {/each} -->
+      <Card class="flex justify-center align-center">
+          <div class="flex-justify-around w-full">
+          <p>Function Name</p>
+          <i class="fa fa-power-off"></i>
+        </div>
+        <Button>See Example</Button>
+      </Card>
     </div>
   </div>
 </div>

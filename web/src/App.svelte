@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Seq } from "biobox";
+  import { AppBar } from "@brainandbones/skeleton";
   import Logo from "../Logo.svg";
   import InputOutput from "./InputOutput.svelte";
   import Operations from "./Operations.svelte";
@@ -19,11 +20,11 @@
     { name: "Sequence Length", functionality: (o) => o.len() },
     { name: "Reverse Sequence", functionality: (o) => o.rev().to_string() },
     {
-      name: "Count Sequence Elements (Bases / Residues)",
+      name: "Count Sequence Elements",
       functionality: (o) => JSON.stringify([...o.count_elements().entries()]),
     },
     {
-      name: "Sequence Conversion (DNA -> RNA)",
+      name: "Sequence Conversion",
       functionality: (o) => o.convert("Rna").to_string(),
     },
     { name: "Type", functionality: (o) => `${o.kind()} (${o.alphabet()})` },
@@ -57,37 +58,31 @@
     console.log(recipeFunctions);
   };
 
-  const handleBgChange = () => {
-    const bodyElement = document.querySelector("body");
-    bodyElement.classList.toggle("light", !darkBg);
-    darkBg = !darkBg;
-  };
-
-  const handleSelectedTool = (e) => {
-    let name = e.target.innerText;
+  const handleSelectedTool = (name) => {
     pipeline = [name, functions.filter((func) => func.name == name)];
     console.log(pipeline);
   };
 </script>
 
 <main>
-  <nav class="nav-grid">
-    <div class="site-title">
-      <img
-        src={Logo}
-        alt="University of Sheffield iGEM Logo"
-        class="logo"
-        on:click={handleBgChange}
+  <AppBar class="h-16">
+    <svelte:fragment slot="lead"
+      ><i class="fa fa-bars nav-icon" /></svelte:fragment
+    >
+    <div class="search-functions">
+      <input
+        id="search"
+        type="search"
+        name="search-function"
+        placeholder="Search a function.."
+        bind:value={searched}
       />
     </div>
-    <ul class="nav-links flex-row">
-      <li>
-        <i class="fas fa-grip-dots" />
-      </li>
-      <li><a href="#">Contact</a></li>
-      <li><a href="#">Feedback</a></li>
-    </ul>
-  </nav>
+    <svelte:fragment slot="trail"
+      ><img src={Logo} alt="logo of the igem team" srcset="" />
+    </svelte:fragment>
+  </AppBar>
+
   <div id="wrapper" class="grid-content">
     <Operations
       {searched}
@@ -96,34 +91,27 @@
       {onFunctionDropped}
     />
     <div class="gutter" />
-    <Recipe {onChangeFunctionDroppedFlag} {recipeFunctions}/>
+    <Recipe {onChangeFunctionDroppedFlag} {recipeFunctions} />
     <div class="gutter" />
     <InputOutput {dna} {pipeline} {seq} />
   </div>
 </main>
-<!-- 
-TODO: Here, (thing.id) is the key, which tells Svelte how to 
-figure out which DOM node to change when the component updates.
 
-{#if x > 10}
-	<p>{x} is greater than 10</p>
-{:else if 5 > x}
-	<p>{x} is less than 5</p>
-{:else}
-	<p>{x} is between 5 and 10</p>
-{/if}
+<style>
+  img {
+    width: 40px;
+  }
 
-spread props
-<script>
-	import Info from './Info.svelte';
-
-	const pkg = {
-		name: 'svelte',
-		version: 3,
-		speed: 'blazing',
-		website: 'https://svelte.dev'
-	};
-</script>
-
-<Info {...pkg}/>
--->
+  .nav-icon {
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-icon:hover {
+    box-shadow: 20px 30px 38px rgb(178, 183, 191);
+    background-color: rgb(188, 193, 201);
+    border-radius: 50%;
+  }
+</style>
