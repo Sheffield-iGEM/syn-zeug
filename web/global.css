@@ -152,7 +152,7 @@
 #operations {
   height: 90vh;
   background-color: var(--borders-color);
-  overflow-y: scroll;
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 #IO {
@@ -215,6 +215,12 @@ nav {
   border-bottom: 1px solid white;
 }
 
+textarea:focus {
+  outline-color: rgb(134,239,172);
+}
+
+
+
 @keyframes fade-in-bottom-right {
   from {
     opacity: 0;
@@ -236,3 +242,4 @@ nav {
     opacity: 0.5;
   }
 }
+

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button, Card } from "@brainandbones/skeleton";
-import { onMount } from "svelte";
+  import { onMount } from "svelte";
   import RecipeFunctions from "./RecipeFunctions.svelte";
 
   export let recipeFunctions = ["this", "that"];
@@ -18,20 +18,49 @@ import { onMount } from "svelte";
 </script>
 
 <div id="recipe">
-  <div class="flex-column">
-    <div class="title grid-title">
-    </div>
-    <div>
+  <div class="flex-column mt-4">
+    <div class="recipe-card">
       <!-- {#each recipeOperations as recipe}
         <RecipeFunctions functionName={recipe} />
       {/each} -->
-      <Card class="flex justify-center align-center">
-          <div class="flex-justify-around w-full">
-          <p>Function Name</p>
-          <i class="fa fa-power-off"></i>
+      <Card class="flex justify-center align-center bg-green-300">
+        <div class="flex justify-between w-[250px] align-center m-4">
+          <p class="text-white ">Function Name</p>
+          <i class="fa fa-power-off" />
         </div>
-        <Button>See Example</Button>
+          <Button
+          class="bg-green-500"
+            size="base"
+            color="text-white"
+            ring="ring-transparent"
+            weight="ring-none"
+            rounded="rounded-lg"
+            width="w-auto"
+            disabled={false}
+          >
+            <svelte:fragment slot="lead">See Example</svelte:fragment>
+      </Button>
       </Card>
     </div>
   </div>
 </div>
+
+<style>
+  .recipe-card {
+    animation: fade-in 1s;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  i {
+    color: rgb(16, 185, 129);
+    cursor: pointer;
+  }
+</style>

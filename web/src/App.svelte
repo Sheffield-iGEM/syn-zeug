@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Seq } from "biobox";
-  import { AppBar } from "@brainandbones/skeleton";
+  import { AppBar, LightSwitch } from "@brainandbones/skeleton";
   import Logo from "../Logo.svg";
   import InputOutput from "./InputOutput.svelte";
   import Operations from "./Operations.svelte";
@@ -79,7 +79,11 @@
       />
     </div>
     <svelte:fragment slot="trail"
-      ><img src={Logo} alt="logo of the igem team" srcset="" />
+      >
+      <div class="flex justify-around align-center ml-4">
+        <img src={Logo} class="ml-6" alt="logo of the igem team" srcset="" />
+        <LightSwitch class="ml-6"/>
+      </div>
     </svelte:fragment>
   </AppBar>
 
@@ -110,7 +114,7 @@
     justify-content: center;
   }
   .nav-icon:hover {
-    box-shadow: 20px 30px 38px rgb(178, 183, 191);
+    box-shadow: 20px 30px 38px rgb(188, 193, 201);
     background-color: rgb(188, 193, 201);
     border-radius: 50%;
   }

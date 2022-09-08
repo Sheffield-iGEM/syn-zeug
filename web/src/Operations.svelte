@@ -33,11 +33,62 @@
 </script>
 
 <div id="operations">
-  <div class="flex-column">
+  <div class="flex-column mt-4">
+
     <AccordionGroup>
       <Card>
         <AccordionItem open>
           <svelte:fragment slot="summary">Chainable Functions</svelte:fragment>
+          <svelte:fragment slot="content">
+
+            {#each functions as func}
+              <div class="functions-grid">
+                <div class="m-4 func">
+                  <Tooltip
+                    background="bg-accent-500"
+                    color="text-primary-200"
+                    width="w-[300px]"
+                    whitespace="whitespace-normal"
+                    rounded="rounded-xl"
+                    duration={0}
+                  >
+                    <svelte:fragment slot="message">
+                      <h3 class="mb-1">Hello, Skeleton 💀</h3>
+                      <span class="text-xs text-white/60"
+                        >Lorem ipsum dolor sit, amet consectetur adipisicing
+                        elit. Obcaecati id atque laboriosam provident eum
+                        facere, architecto veniam.</span
+                      >
+                    </svelte:fragment>
+                    <svelte:fragment slot="content">
+                      <p on:click={() => handleSelectedTool(func.name)}>
+                        {func.name}
+                      </p>
+                    </svelte:fragment>
+                  </Tooltip>
+                </div>
+
+                <SlideToggle
+                  class="m-2"
+                  bind:checked={activeFunctions[functions.indexOf(func)]
+                    .myValue}
+                  size="sm"
+                  accent="bg-primary-500"
+                />
+
+                <Divider />
+
+              </div>
+            {/each}
+          </svelte:fragment>
+        </AccordionItem>
+      </Card>
+    </AccordionGroup>
+
+    <AccordionGroup>
+      <Card>
+        <AccordionItem open>
+          <svelte:fragment slot="summary">Non Chainable Functions</svelte:fragment>
           <svelte:fragment slot="content">
 
             {#each functions as func}
