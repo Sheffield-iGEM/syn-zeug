@@ -792,7 +792,7 @@ mod tests {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGCGCGCGCGCGCGCGCGCGCGCGGCGCGCGCGCGG")?;
         let gc = dna.gc_content()?;
-        assert_eq!(gc, 50.0);
+        assert_eq!(gc, 0.5);
         Ok(())
     }
 
