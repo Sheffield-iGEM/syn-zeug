@@ -119,7 +119,7 @@ fn gc_cont_base(c: &mut Criterion) {
         "gc_cont_base",
         "rosalind_dna.txt",
         Seq::dna,
-        Seq::gc_content
+        Seq::gc_content,
     );
 }
 

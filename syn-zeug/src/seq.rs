@@ -268,10 +268,12 @@ impl Seq {
         let counts = self.normalize_case(Case::Upper).count_elements();
         let gc = match self.alphabet {
             Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64,
-            _ => IUPAC_GC_PROBS
-                .into_iter()
-                .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
-                / self.bytes.len() as f64
+            _ => {
+                IUPAC_GC_PROBS
+                    .into_iter()
+                    .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
+                    / self.bytes.len() as f64
+            }
         };
         Ok(gc)
     }
@@ -287,7 +289,6 @@ impl Seq {
         }
         counts
     }
-
 }
 
 impl fmt::Display for Error {
