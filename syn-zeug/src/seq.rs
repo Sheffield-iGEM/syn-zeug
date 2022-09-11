@@ -260,9 +260,6 @@ impl Seq {
             .collect())
     }
 
-    // TODO -
-    // Benchmarking
-    // Add more tests
     pub fn gc_content(&self) -> Result<f64, Error> {
         if self.kind == Kind::Protein {
             return Err(Error::GCCont(self.kind));
@@ -790,7 +787,6 @@ mod tests {
     }
 
     // ===== GC Content Tool Tests =================================================================
-    // TODO
     #[test]
     fn gc_cont_simple() -> Result<(), Error> {
         let dna =
