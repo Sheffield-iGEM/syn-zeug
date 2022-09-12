@@ -11,6 +11,10 @@
 
   $: seq = new Seq(input);
   $: output = seq.reverse_complement().to_string();
+  let selection = "";
+  document.addEventListener(`selectionchange`, () => {
+    selection = document.getSelection();
+  });
 </script>
 
 <main
@@ -20,5 +24,5 @@
   <Input bind:value={input} />
   <Cell title="Pipeline" />
   <!-- This should flash it's color when a new output is computed! -->
-  <Output bind:value={output} />
+  <Output bind:value={selection} />
 </main>
