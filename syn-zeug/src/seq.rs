@@ -288,6 +288,7 @@ impl Seq {
     }
 
     //TODO
+    // From the looks of it, bio is using the best possible method -> waiting for Brooks' feedback
     pub fn hamming_distance(&self) -> Result<u64, Error> {
         unimplemented!()
     }
