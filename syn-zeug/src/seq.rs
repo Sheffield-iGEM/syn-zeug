@@ -17,7 +17,7 @@ pub enum Error {
     InvalidConversion(Kind, Kind),
     InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
-    GCCont(Kind),
+    GcContent(Kind),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -262,20 +262,29 @@ impl Seq {
 
     pub fn gc_content(&self) -> Result<f64, Error> {
         if self.kind == Kind::Protein {
-            return Err(Error::GCCont(self.kind));
+            return Err(Error::GcContent(self.kind));
         }
 
-        let counts = self.normalize_case(Case::Upper).count_elements();
-        let gc = match self.alphabet {
-            Alphabet::Base => (counts[b'G'] + counts[b'C']) as f64 / self.bytes.len() as f64,
-            _ => {
+        // OPTIMISATION: Curiously, using `.normalize_case(Case::Upper)` is faster than directly
+        // adding `.map(u8::to_ascii_uppercase)` to the iterator chain
+        let seq = self.normalize_case(Case::Upper);
+
+        // OPTIMISATION: Here a simpler version of the code is used for `Alphabet::Base` sequences
+        // that is ~1.92 times faster than the version accounting for N and IUPAC sequences
+        Ok(match self.alphabet {
+            Alphabet::Base => seq
+                .bytes
+                .iter()
+                .filter(|&&b| matches!(b, b'G' | b'C'))
+                .count() as f64,
+            Alphabet::N | Alphabet::Iupac => {
+                let counts = seq.count_elements();
                 IUPAC_GC_PROBS
                     .into_iter()
-                    .fold(0.0, |acc, (&k, &v)| acc + (v * counts[k] as f64))
-                    / self.bytes.len() as f64
+                    .map(|(&k, v)| counts[k] as f64 * v)
+                    .sum::<f64>()
             }
-        };
-        Ok(gc)
+        } / self.len() as f64)
     }
 
     // ===== Terminal Tools ========================================================================
@@ -302,7 +311,7 @@ impl fmt::Display for Error {
                 write!(f, "The provided sequence was not valid {kinds}")?;
             }
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
-            Error::GCCont(kind) => write!(f, "Cannot provide GC content for {kind}")?,
+            Error::GcContent(kind) => write!(f, "Cannot provide GC content for {kind}")?,
         }
         Ok(())
     }
@@ -788,12 +797,12 @@ mod tests {
     }
 
     // ===== GC Content Tool Tests =================================================================
+
     #[test]
     fn gc_cont_simple() -> Result<(), Error> {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGCGCGCGCGCGCGCGCGCGCGCGGCGCGCGCGCGG")?;
-        let gc = dna.gc_content()?;
-        assert_eq!(gc, 0.5);
+        assert_eq!(dna.gc_content()?, 0.5);
         Ok(())
     }
 
@@ -801,24 +810,36 @@ mod tests {
     fn gc_cont_missing_val() -> Result<(), Error> {
         let dna =
             Seq::dna("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")?;
-        let gc = dna.gc_content()?;
-        assert_eq!(gc, 0.0);
+        assert_eq!(dna.gc_content()?, 0.0);
+        Ok(())
+    }
+
+    #[test]
+    fn gc_cont_lower_case() -> Result<(), Error> {
+        let dna =
+            Seq::dna("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaagcgcgcgcgcgcgcgcgcgcgcggcgcgcgcgcgg")?;
+        assert_eq!(dna.gc_content()?, 0.5);
         Ok(())
     }
 
     #[test]
     fn gc_cont_iupac() -> Result<(), Error> {
         let dna = Seq::dna_iupac("GCNS")?;
-        let gc = dna.gc_content()?;
-        assert_eq!(gc, 0.8125);
+        assert_eq!(dna.gc_content()?, 0.8125);
         Ok(())
     }
 
     #[test]
-    fn gc_cont_lower_case() -> Result<(), Error> {
+    fn gc_cont_iupac_lower_case() -> Result<(), Error> {
         let dna = Seq::dna_iupac("cgbdnsrykm")?;
-        let gc = dna.gc_content()?;
-        assert_eq!(gc, 0.625);
+        assert_eq!(dna.gc_content()?, 0.625);
+        Ok(())
+    }
+
+    #[test]
+    fn gc_cont_protein() -> Result<(), Error> {
+        let protein = Seq::protein("MAMAPRTEINSTRING*")?;
+        assert_eq!(protein.gc_content(), Err(Error::GcContent(Kind::Protein)));
         Ok(())
     }
 
@@ -1480,6 +1501,10 @@ mod tests {
         assert_eq!(
             &Error::RevComp(Kind::Protein).to_string(),
             "Cannot reverse complement Protein"
+        );
+        assert_eq!(
+            &Error::GcContent(Kind::Protein).to_string(),
+            "Cannot provide GC content for Protein"
         );
     }
 }
