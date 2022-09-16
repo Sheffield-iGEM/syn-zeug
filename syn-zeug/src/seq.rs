@@ -3,7 +3,7 @@ use bio::{
     seq_analysis::orf::{self, Orf},
 };
 use serde::{Deserialize, Serialize};
-use std::{fmt, slice::SliceIndex, str};
+use std::{fmt, slice::SliceIndex, str, collections::HashMap};
 
 use crate::{
     data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE, IUPAC_CODON_TABLE, IUPAC_GC_PROBS},
@@ -297,6 +297,11 @@ impl Seq {
             counts[b] += 1;
         }
         counts
+    }
+
+    // TODO
+    pub fn percent_composition(&self) -> HashMap<char, u64> {
+        unimplemented!()
     }
 }
 
