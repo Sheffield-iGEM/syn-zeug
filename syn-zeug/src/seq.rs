@@ -287,6 +287,11 @@ impl Seq {
         } / self.len() as f64)
     }
 
+    //TODO
+    pub fn hamming_distance(&self) -> Result<u64, Error> {
+        unimplemented!()
+    }
+
     // ===== Terminal Tools ========================================================================
 
     // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
