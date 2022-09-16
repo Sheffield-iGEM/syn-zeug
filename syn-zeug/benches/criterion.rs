@@ -9,7 +9,7 @@ use syn_zeug::{
 };
 
 fn new_best(c: &mut Criterion) {
-    bench_time_complexity(
+    bench_single_time_complexity(
         c,
         "new_best",
         "ambiguous_seq.txt",
@@ -22,7 +22,7 @@ fn new_best(c: &mut Criterion) {
 
 // NOTE: No longer the real worst case for this algorithm
 fn new_worst(c: &mut Criterion) {
-    bench_time_complexity(
+    bench_single_time_complexity(
         c,
         "new_worst",
         "ambiguous_seq.txt",
@@ -32,7 +32,7 @@ fn new_worst(c: &mut Criterion) {
 }
 
 fn new_null(c: &mut Criterion) {
-    bench_time_complexity(
+    bench_single_time_complexity(
         c,
         "new_null",
         "ambiguous_seq.txt",
@@ -113,22 +113,46 @@ fn find_orfs(c: &mut Criterion) {
     });
 }
 
+fn gc_cont_base(c: &mut Criterion) {
+    bench_method(
+        c,
+        "gc_cont_base",
+        "rosalind_dna.txt",
+        Seq::dna,
+        Seq::gc_content,
+    );
+}
+
+fn gc_cont_iupac(c: &mut Criterion) {
+    bench_method(
+        c,
+        "gc_cont_iupac",
+        "rosalind_prot_iupac_dna.txt",
+        Seq::dna_iupac,
+        Seq::gc_content,
+    );
+}
+
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
     targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
-              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs
+              rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs,
+              gc_cont_base, gc_cont_iupac
 );
 criterion_main!(benches);
 
-fn bench_time_complexity<C, O, R, D>(
+// NOTE: To compare functions, you may need to cast things to a function pointer at the first site:
+// [("Adam", Seq::gc_content as fn(&_) -> _), ("Brooks", Seq::bio_gc_content)],
+fn bench_time_complexity<S, C, O, R, D>(
     c: &mut Criterion,
     bench_name: impl Into<String>,
     data_file: impl AsRef<str>,
     builder: C,
-    routine: R,
+    routines: impl AsRef<[(S, R)]>,
 ) where
     C: Fn(Vec<u8>) -> D,
+    S: Into<String> + Clone,
     R: Fn(&D) -> O,
 {
     let data = utils::load_bench_data(data_file);
@@ -140,11 +164,27 @@ fn bench_time_complexity<C, O, R, D>(
         let input = builder(data);
         group.measurement_time(Duration::from_secs(5));
         group.throughput(Throughput::Bytes(size));
-        group.bench_with_input(BenchmarkId::from_parameter(size), &input, |b, input| {
-            b.iter(|| routine(input));
-        });
+        for (s, r) in routines.as_ref() {
+            // TODO: Is there a way to avoid this clone?
+            group.bench_with_input(BenchmarkId::new(s.clone(), size), &input, |b, input| {
+                b.iter(|| r(input));
+            });
+        }
     }
     group.finish();
+}
+
+fn bench_single_time_complexity<C, O, R, D>(
+    c: &mut Criterion,
+    bench_name: impl Into<String>,
+    data_file: impl AsRef<str>,
+    builder: C,
+    routine: R,
+) where
+    C: Fn(Vec<u8>) -> D,
+    R: Fn(&D) -> O,
+{
+    bench_time_complexity(c, bench_name, data_file, builder, [("", routine)]);
 }
 
 fn bench_method<C, O, R, S, E>(
@@ -158,7 +198,7 @@ fn bench_method<C, O, R, S, E>(
     R: Fn(&S) -> O,
     E: Debug,
 {
-    bench_time_complexity(
+    bench_single_time_complexity(
         c,
         bench_name,
         data_file,
