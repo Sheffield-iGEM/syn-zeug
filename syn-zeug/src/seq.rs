@@ -303,6 +303,7 @@ impl Seq {
     // Add benches
     // > is it worth adding a var to hold self.bytes.len? i.e. is constant calling of len() slow?
     // Add tests
+    // Is this too far off-style for Brooks?
     pub fn percent_composition(&self) -> HashMap<char, f64> {
         self.count_elements()
             .to_hashmap(|&c, _| {
