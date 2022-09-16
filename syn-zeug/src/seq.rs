@@ -3,7 +3,7 @@ use bio::{
     seq_analysis::orf::{self, Orf},
 };
 use serde::{Deserialize, Serialize};
-use std::{fmt, slice::SliceIndex, str, collections::HashMap};
+use std::{collections::HashMap, fmt, slice::SliceIndex, str};
 
 use crate::{
     data::{ALPHABETS, ALPHABET_MAP, CODON_TABLE, IUPAC_CODON_TABLE, IUPAC_GC_PROBS},
@@ -300,8 +300,19 @@ impl Seq {
     }
 
     // TODO
-    pub fn percent_composition(&self) -> HashMap<char, u64> {
-        unimplemented!()
+    // Add benches
+    // > is it worth adding a var to hold self.bytes.len? i.e. is constant calling of len() slow?
+    // Add tests
+    pub fn percent_composition(&self) -> HashMap<char, f64> {
+        self.count_elements()
+            .to_hashmap(|&c, _| {
+                ALPHABET_MAP[&(self.kind, self.alphabet)]
+                    .symbols
+                    .contains(c as usize)
+            })
+            .iter()
+            .map(|(_, &v)| v as f64 / self.bytes.len())
+            .collect()
     }
 }
 
