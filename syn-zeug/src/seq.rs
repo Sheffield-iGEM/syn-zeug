@@ -897,6 +897,11 @@ mod tests {
     }
 
     #[test]
+    fn hamming_protein() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
     fn levenshtein_dna() -> Result<(), Error> {
         unimplemented!()
     }
@@ -913,6 +918,11 @@ mod tests {
 
     #[test]
     fn levenshtein_inequal_length() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_protein() -> Result<(), Error> {
         unimplemented!()
     }
 
