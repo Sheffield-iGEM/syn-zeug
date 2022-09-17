@@ -292,20 +292,26 @@ impl Seq {
     //TODO
     // Add tests
     // Add benchmarks
+
+    // Adam note: I've assumed that the cases must be normalized
     pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()));
         };
-        Ok(bio::alignment::distance::hamming(&self.bytes, &other.bytes))
+        let seq1 = self.normalize_case(Case::Upper);
+        let seq2 = other.normalize_case(Case::Upper);
+        Ok(bio::alignment::distance::hamming(&seq1.bytes, &seq2.bytes))
     }
 
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()));
         };
+        let seq1 = self.normalize_case(Case::Upper);
+        let seq2 = other.normalize_case(Case::Upper);
         Ok(bio::alignment::distance::levenshtein(
-            &self.bytes,
-            &other.bytes,
+            &seq1.bytes,
+            &seq2.bytes,
         ))
     }
 
