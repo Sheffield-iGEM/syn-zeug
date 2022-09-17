@@ -894,24 +894,29 @@ mod tests {
 
     #[test]
     fn hamming_rna() -> Result<(), Error> {
-        let a = Seq::rna("ACGTGTACGTGTACGT")?;
-        let b = Seq::rna("ACGTCTACTTGTGCCG")?;
+        let a = Seq::rna("ACGUGUACGUGUACGU")?;
+        let b = Seq::rna("ACGUCUACUUGUGCCG")?;
         assert_eq!(a.hamming_distance(&b)?, 5);
         Ok(())
     }
 
     #[test]
-    fn hamming_dna_rna() -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    #[test]
-    fn hamming_inequal_len() -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    #[test]
     fn hamming_protein() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_different_alphabet() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_type_mismatch() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_unequal_len() -> Result<(), Error> {
         unimplemented!()
     }
 
@@ -926,17 +931,22 @@ mod tests {
     }
 
     #[test]
-    fn levenshtein_dna_rna() -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    #[test]
-    fn levenshtein_inequal_length() -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    #[test]
     fn levenshtein_protein() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_different_alphabet() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_type_mismatch() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_unequal_length() -> Result<(), Error> {
         unimplemented!()
     }
 
