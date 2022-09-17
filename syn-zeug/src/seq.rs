@@ -294,16 +294,19 @@ impl Seq {
     // Add benchmarks
     pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
         if self.bytes.len() != other.bytes.len() {
-            return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()))
+            return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()));
         };
         Ok(bio::alignment::distance::hamming(&self.bytes, &other.bytes))
     }
 
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
         if self.bytes.len() != other.bytes.len() {
-            return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()))
+            return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()));
         };
-        Ok(bio::alignment::distance::levenshtein(&self.bytes, &other.bytes))
+        Ok(bio::alignment::distance::levenshtein(
+            &self.bytes,
+            &other.bytes,
+        ))
     }
 
     // ===== Terminal Tools ========================================================================
