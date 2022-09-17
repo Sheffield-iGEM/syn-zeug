@@ -20,6 +20,7 @@ pub enum Error {
     GcContent(Kind),
     HamDistance(usize, usize),
     LevDistance(usize, usize),
+    DistanceKindMismatch(Kind, Kind),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -342,6 +343,7 @@ impl fmt::Display for Error {
             Error::GcContent(kind) => write!(f, "Cannot provide GC content for {kind}")?,
             Error::HamDistance(len1, len2) => write!(f, "Cannot compute hamming distance for sequences of different length ({len1} != {len2})")?,
             Error::LevDistance(len1, len2) => write!(f, "Cannot compute levenshtein distance for sequences of different length ({len1} != {len2})")?,
+            Error::DistanceKindMismatch(k1, k2) => write!(f, "Cannot compute distance between {k1} and {k2}")?,
         }
         Ok(())
     }
@@ -878,12 +880,18 @@ mod tests {
 
     #[test]
     fn hamming_dna() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::dna("ACGTGTACGTGTACGT")?;
+        let b = Seq::dna("ACGTCTACTTGTGCCG")?;
+        assert_eq!(a.hamming_distance(&b)?, 5);
+        Ok(())
     }
 
     #[test]
     fn hamming_rna() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::rna("ACGTGTACGTGTACGT")?;
+        let b = Seq::rna("ACGTCTACTTGTGCCG")?;
+        assert_eq!(a.hamming_distance(&b)?, 5);
+        Ok(())
     }
 
     #[test]
