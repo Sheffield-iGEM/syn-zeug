@@ -299,6 +299,9 @@ impl Seq {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()));
         };
+        if self.kind != other.kind {
+            return Err(Error::DistanceKindMismatch(self.kind, other.kind));
+        };
         let seq1 = self.normalize_case(Case::Upper);
         let seq2 = other.normalize_case(Case::Upper);
         Ok(bio::alignment::distance::hamming(&seq1.bytes, &seq2.bytes))
@@ -307,6 +310,9 @@ impl Seq {
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()));
+        };
+        if self.kind != other.kind {
+            return Err(Error::DistanceKindMismatch(self.kind, other.kind));
         };
         let seq1 = self.normalize_case(Case::Upper);
         let seq2 = other.normalize_case(Case::Upper);
