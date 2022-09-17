@@ -873,6 +873,49 @@ mod tests {
         Ok(())
     }
 
+    // ===== Hamming + Levenshtein Distance Tool Tests =============================================
+    // TODO
+
+    #[test]
+    fn hamming_dna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_rna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_dna_rna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn hamming_inequal_len() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_dna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_rna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_dna_rna() -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    #[test]
+    fn levenshtein_inequal_length() -> Result<(), Error> {
+        unimplemented!()
+    }
+
     // ===== ORF Finding + Translation Tool Tests ==================================================
 
     #[test]
