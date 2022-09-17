@@ -290,15 +290,20 @@ impl Seq {
     }
 
     //TODO
-    // From the looks of it, bio is using the best possible method -> create wrapper
-    // Add new error type
-    // Add Levenshtein Distance
+    // Add tests
+    // Add benchmarks
     pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
-        unimplemented!()
+        if self.bytes.len() != other.bytes.len() {
+            return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()))
+        };
+        Ok(bio::alignment::distance::hamming(&self.bytes, &other.bytes))
     }
 
-    pub fn levenshtein_distance(&self, other: &Self) -> Result<u64, Error> {
-        unimplemented!()
+    pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
+        if self.bytes.len() != other.bytes.len() {
+            return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()))
+        };
+        Ok(bio::alignment::distance::levenshtein(&self.bytes, &other.bytes))
     }
 
     // ===== Terminal Tools ========================================================================
