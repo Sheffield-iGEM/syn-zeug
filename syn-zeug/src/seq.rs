@@ -18,6 +18,8 @@ pub enum Error {
     InvalidSeq(Vec<(Kind, Alphabet)>),
     RevComp(Kind),
     GcContent(Kind),
+    HamDistance(usize, usize),
+    LevDistance(usize, usize),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -324,6 +326,8 @@ impl fmt::Display for Error {
             }
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
             Error::GcContent(kind) => write!(f, "Cannot provide GC content for {kind}")?,
+            Error::HamDistance(len1, len2) => write!(f, "Cannot compute hamming distance for sequences of different length ({len1} != {len2})")?,
+            Error::LevDistance(len1, len2) => write!(f, "Cannot compute levenshtein distance for sequences of different length ({len1} != {len2})")?,
         }
         Ok(())
     }
