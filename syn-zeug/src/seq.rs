@@ -19,7 +19,6 @@ pub enum Error {
     RevComp(Kind),
     GcContent(Kind),
     HamDistance(usize, usize),
-    LevDistance(usize, usize),
     DistanceKindMismatch(Kind, Kind),
 }
 
@@ -309,9 +308,6 @@ impl Seq {
     // ADAM: bio::alignment::distance::levenshtein runs in O(n * m) -> perhaps use 'Enhanced
     // Ukkonen' method instead? Apparently in O(n + d^2) [or order(n)? need to have a looksie]
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
-        if self.bytes.len() != other.bytes.len() {
-            return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()));
-        };
         if self.kind != other.kind {
             return Err(Error::DistanceKindMismatch(self.kind, other.kind));
         };
@@ -349,7 +345,6 @@ impl fmt::Display for Error {
             Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
             Error::GcContent(kind) => write!(f, "Cannot provide GC content for {kind}")?,
             Error::HamDistance(len1, len2) => write!(f, "Cannot compute hamming distance for sequences of different length ({len1} != {len2})")?,
-            Error::LevDistance(len1, len2) => write!(f, "Cannot compute levenshtein distance for sequences of different length ({len1} != {len2})")?,
             Error::DistanceKindMismatch(k1, k2) => write!(f, "Cannot compute distance between {k1} and {k2}")?,
         }
         Ok(())
