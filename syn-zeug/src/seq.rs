@@ -292,7 +292,6 @@ impl Seq {
 
     //TODO
     // Add tests
-    // Add benchmarks
 
     // Adam note: I've assumed that the cases must be normalized
     pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
@@ -307,6 +306,8 @@ impl Seq {
         Ok(bio::alignment::distance::hamming(&seq1.bytes, &seq2.bytes))
     }
 
+    // ADAM: bio::alignment::distance::levenshtein runs in O(n * m) -> perhaps use 'Enhanced
+    // Ukkonen' method instead? Apparently in O(n + d^2) [or order(n)? need to have a looksie]
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::LevDistance(self.bytes.len(), other.bytes.len()));
