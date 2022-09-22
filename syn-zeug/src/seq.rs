@@ -289,10 +289,6 @@ impl Seq {
         } / self.len() as f64)
     }
 
-    //TODO
-    // Add tests
-
-    // Adam note: I've assumed that the cases must be normalized
     pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
         if self.bytes.len() != other.bytes.len() {
             return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()));
@@ -897,52 +893,80 @@ mod tests {
 
     #[test]
     fn hamming_protein() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::protein("MAMAPRTEINSTRING")?;
+        let b = Seq::protein("MIMAPNSGINSTRENN")?;
+        assert_eq!(a.hamming_distance(&b)?, 6);
+        Ok(())
     }
 
     #[test]
     fn hamming_different_alphabet() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::rna("ACGUGUACGUGUACGU")?;
+        let b = Seq::rna_n("AGCUUNUCAUUCUNNC")?;
+        assert!(!a.hamming_distance(&b).is_err());
+        Ok(())
     }
 
     #[test]
     fn hamming_type_mismatch() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::protein("MAMAPRTEINSTRING")?;
+        let b = Seq::rna("ACGUGUACGUGUACGU")?;
+        assert_eq!(
+            a.hamming_distance(&b),
+            Err(Error::DistanceKindMismatch(Kind::Protein, Kind::Rna))
+        );
+        Ok(())
     }
 
     #[test]
     fn hamming_unequal_len() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::rna("ACGUGUACGUGUACGU")?;
+        let b = Seq::rna("ACGUGUACGUGUACGUACG")?;
+        assert_eq!(a.hamming_distance(&b), Err(Error::HamDistance(16, 19)));
+        Ok(())
     }
 
     #[test]
     fn levenshtein_dna() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::dna("AACGTGTACGTGTACGTAGCT")?;
+        let b = Seq::dna("ACGTCTACTTGTGCCG")?;
+        assert_eq!(a.levenshtein_distance(&b)?, 9);
+        Ok(())
     }
 
     #[test]
     fn levenshtein_rna() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::rna("AACACGUGUACGUGUACGUCGUUGC")?;
+        let b = Seq::rna("ACGUCUACUUGUGCCG")?;
+        assert_eq!(a.levenshtein_distance(&b)?, 12);
+        Ok(())
     }
 
     #[test]
     fn levenshtein_protein() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::protein("MPRMAMAPRTEINSTRINGM")?;
+        let b = Seq::protein("MIMAPNSGINSTRENN")?;
+        assert_eq!(a.levenshtein_distance(&b)?, 10);
+        Ok(())
     }
 
     #[test]
     fn levenshtein_different_alphabet() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::rna("ACGUGUACGUGUACGU")?;
+        let b = Seq::rna_n("AGCUUNUCAUUCUNNC")?;
+        assert!(!a.levenshtein_distance(&b).is_err());
+        Ok(())
     }
 
     #[test]
     fn levenshtein_type_mismatch() -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    #[test]
-    fn levenshtein_unequal_length() -> Result<(), Error> {
-        unimplemented!()
+        let a = Seq::protein("MAMAPRTEINSTRING")?;
+        let b = Seq::rna("ACGUGUACGUGUACGU")?;
+        assert_eq!(
+            a.levenshtein_distance(&b),
+            Err(Error::DistanceKindMismatch(Kind::Protein, Kind::Rna))
+        );
+        Ok(())
     }
 
     // ===== ORF Finding + Translation Tool Tests ==================================================
