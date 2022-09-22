@@ -305,8 +305,7 @@ impl Seq {
         Ok(bio::alignment::distance::hamming(&seq1.bytes, &seq2.bytes))
     }
 
-    // ADAM: bio::alignment::distance::levenshtein runs in O(n * m) -> perhaps use 'Enhanced
-    // Ukkonen' method instead? Apparently in O(n + d^2) [or order(n)? need to have a looksie]
+    // Bio version is poorly optimised -> make optimised version?
     pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
         if self.kind != other.kind {
             return Err(Error::DistanceKindMismatch(self.kind, other.kind));
