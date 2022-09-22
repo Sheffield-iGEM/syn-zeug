@@ -139,7 +139,7 @@ fn ham_distance(c: &mut Criterion) {
         "ham_distance",
         "rosalind_prot_iupac_dna.txt",
         Seq::dna_iupac,
-        |seq1 | seq1.hamming_distance(&seq1.rev()),
+        |seq1| seq1.hamming_distance(&seq1.rev()),
     );
 }
 
@@ -149,7 +149,7 @@ fn lev_distance(c: &mut Criterion) {
         "lev_distance",
         "rosalind_prot_iupac_dna.txt",
         Seq::dna_iupac,
-        |seq1 | seq1.levenshtein_distance(&seq1.rev()),
+        |seq1| seq1.levenshtein_distance(&seq1.rev()),
     );
 }
 
