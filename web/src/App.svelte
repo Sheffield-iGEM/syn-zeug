@@ -1,11 +1,9 @@
 <script lang="ts">
-  import Something from "./something.svelte";
   import Popup from "./Popup.svelte";
+  import Recipe from "./Recipe.svelte";
+
 </script>
 
 <div class="w-full h-screen flex items-center justify-center">
-  <Popup/>
-  <!-- <Recipe/> -->
+  <Recipe/>
 </div>
-
-

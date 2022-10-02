@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { Card } from "@brainandbones/skeleton";
   import { Divider } from "@brainandbones/skeleton";
   import { SlideToggle } from "@brainandbones/skeleton";
   import { Tooltip } from "@brainandbones/skeleton";
-  import { Button } from "@brainandbones/skeleton";
   import { AccordionGroup, AccordionItem } from "@brainandbones/skeleton";
 
   export let searched = "";
+  
   export let functions = [
     {
       name: "Reverse Complement",

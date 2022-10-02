@@ -3,18 +3,18 @@
   import { Button, Divider } from "@brainandbones/skeleton";
   import { Card } from "@brainandbones/skeleton";
   import { ListItem, List } from "@brainandbones/skeleton";
-  import Something from "./something.svelte";
+  import Search from "./Search.svelte";
 
   export let searched = "";
   const storeSingle = writable(1);
 </script>
 
 <!-- popup card -->
-<Card class="shadow-2xl shadow-[rgb(65,225,222)] w-[300px] md:w-2/3 h-2/3 overflow-y-scroll">
+<Card class="w-[300px] md:w-2/3 h-2/3 overflow-y-scroll">
   <!-- search function -->
   <!-- the following div is used to center the search bar -->
   <div class="flex justify-center items-center w-full m-2">
-    <Something />
+    <Search />
   </div>
 
   <Divider vertical={true} borderWidth="border-l" />
@@ -71,20 +71,3 @@
   </div>
 </Card>
 
-<!-- TODO: this is the backup search functionality -->
-
-<!-- <div class="search-functions w-[250px]">
-  <input
-    id="search"
-    type="search"
-    name="search-function"
-    placeholder="Search a function.."
-    bind:value={searched}
-  />
-</div> -->
-<style>
-  .active {
-    color: rgb(95, 230, 230);
-  }
-
-</style>
