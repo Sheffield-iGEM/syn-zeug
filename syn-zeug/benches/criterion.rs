@@ -133,12 +133,32 @@ fn gc_cont_iupac(c: &mut Criterion) {
     );
 }
 
+fn ham_distance(c: &mut Criterion) {
+    bench_method(
+        c,
+        "ham_distance",
+        "rosalind_prot_iupac_dna.txt",
+        Seq::dna_iupac,
+        |seq1| seq1.hamming_distance(&seq1.rev()),
+    );
+}
+
+fn lev_distance(c: &mut Criterion) {
+    bench_method(
+        c,
+        "lev_distance",
+        "rosalind_prot_iupac_dna.txt",
+        Seq::dna_iupac,
+        |seq1| seq1.levenshtein_distance(&seq1.rev()),
+    );
+}
+
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
     targets = new_best, new_worst, new_null, rev, count_elements, normalize_case, dna_to_rna,
               rna_to_protein, dna_to_protein, iupac_dna_to_protein, reverse_complement, find_orfs,
-              gc_cont_base, gc_cont_iupac
+              gc_cont_base, gc_cont_iupac, ham_distance, lev_distance
 );
 criterion_main!(benches);
 
@@ -165,8 +185,13 @@ fn bench_time_complexity<S, C, O, R, D>(
         group.measurement_time(Duration::from_secs(5));
         group.throughput(Throughput::Bytes(size));
         for (s, r) in routines.as_ref() {
-            // TODO: Is there a way to avoid this clone?
-            group.bench_with_input(BenchmarkId::new(s.clone(), size), &input, |b, input| {
+            let s: String = s.to_owned().into();
+            let bench_id = if s.is_empty() {
+                BenchmarkId::from_parameter(size)
+            } else {
+                BenchmarkId::new(s, size)
+            };
+            group.bench_with_input(bench_id, &input, |b, input| {
                 b.iter(|| r(input));
             });
         }
