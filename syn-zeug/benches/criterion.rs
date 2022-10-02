@@ -185,8 +185,13 @@ fn bench_time_complexity<S, C, O, R, D>(
         group.measurement_time(Duration::from_secs(5));
         group.throughput(Throughput::Bytes(size));
         for (s, r) in routines.as_ref() {
-            // TODO: Is there a way to avoid this clone?
-            group.bench_with_input(BenchmarkId::new(s.clone(), size), &input, |b, input| {
+            let s: String = s.to_owned().into();
+            let bench_id = if s.is_empty() {
+                BenchmarkId::from_parameter(size)
+            } else {
+                BenchmarkId::new(s, size)
+            };
+            group.bench_with_input(bench_id, &input, |b, input| {
                 b.iter(|| r(input));
             });
         }

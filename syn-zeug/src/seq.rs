@@ -1,4 +1,5 @@
 use bio::{
+    alignment::distance,
     alphabets::{dna, rna},
     seq_analysis::orf::{self, Orf},
 };
@@ -16,9 +17,9 @@ pub enum Error {
     FindOrf(Kind),
     InvalidConversion(Kind, Kind),
     InvalidSeq(Vec<(Kind, Alphabet)>),
-    RevComp(Kind),
+    ReverseComplement(Kind),
     GcContent(Kind),
-    HamDistance(usize, usize),
+    HammingDistance(usize, usize),
     DistanceKindMismatch(Kind, Kind),
 }
 
@@ -171,7 +172,7 @@ impl Seq {
                 bytes: rna::revcomp(&self.bytes),
                 ..*self
             }),
-            Kind::Protein => Err(Error::RevComp(self.kind)),
+            Kind::Protein => Err(Error::ReverseComplement(self.kind)),
         }
     }
 
@@ -289,29 +290,39 @@ impl Seq {
         } / self.len() as f64)
     }
 
-    pub fn hamming_distance(&self, other: &Self) -> Result<u64, Error> {
-        if self.bytes.len() != other.bytes.len() {
-            return Err(Error::HamDistance(self.bytes.len(), other.bytes.len()));
-        };
+    pub fn hamming_distance(&self, other: &Self) -> Result<usize, Error> {
+        if self.len() != other.len() {
+            return Err(Error::HammingDistance(self.len(), other.len()));
+        }
         if self.kind != other.kind {
             return Err(Error::DistanceKindMismatch(self.kind, other.kind));
+        }
+
+        // OPTIMISATION: Where SIMD is available, it can be many times faster than a non-SIMD
+        // implementation, but the SIMD version of the hamming distance function is limited to
+        // returning a u32. If the sequences being compared are too long to compute using the SIMD
+        // version of this function, fall back to the naive implementation
+        let hamming = if self.len() > u32::MAX as usize {
+            distance::hamming
+        } else {
+            distance::simd::hamming
         };
-        let seq1 = self.normalize_case(Case::Upper);
-        let seq2 = other.normalize_case(Case::Upper);
-        Ok(bio::alignment::distance::hamming(&seq1.bytes, &seq2.bytes))
+
+        Ok(hamming(
+            &self.normalize_case(Case::Upper).bytes,
+            &other.normalize_case(Case::Upper).bytes,
+        ) as usize)
     }
 
-    // Bio version is poorly optimised -> make optimised version?
-    pub fn levenshtein_distance(&self, other: &Self) -> Result<u32, Error> {
+    pub fn levenshtein_distance(&self, other: &Self) -> Result<usize, Error> {
         if self.kind != other.kind {
             return Err(Error::DistanceKindMismatch(self.kind, other.kind));
-        };
-        let seq1 = self.normalize_case(Case::Upper);
-        let seq2 = other.normalize_case(Case::Upper);
-        Ok(bio::alignment::distance::levenshtein(
-            &seq1.bytes,
-            &seq2.bytes,
-        ))
+        }
+
+        Ok(distance::simd::levenshtein(
+            &self.normalize_case(Case::Upper).bytes,
+            &other.normalize_case(Case::Upper).bytes,
+        ) as usize)
     }
 
     // ===== Terminal Tools ========================================================================
@@ -337,10 +348,15 @@ impl fmt::Display for Error {
                 let kinds = kinds[..kinds.len() - 1].join(", ") + ", or " + &kinds[kinds.len() - 1];
                 write!(f, "The provided sequence was not valid {kinds}")?;
             }
-            Error::RevComp(kind) => write!(f, "Cannot reverse complement {kind}")?,
+            Error::ReverseComplement(kind) => write!(f, "Cannot reverse complement {kind}")?,
             Error::GcContent(kind) => write!(f, "Cannot provide GC content for {kind}")?,
-            Error::HamDistance(len1, len2) => write!(f, "Cannot compute hamming distance for sequences of different length ({len1} != {len2})")?,
-            Error::DistanceKindMismatch(k1, k2) => write!(f, "Cannot compute distance between {k1} and {k2}")?,
+            Error::HammingDistance(l1, l2) => write!(
+                f,
+                "Cannot compute Hamming distance between sequences of different lengths ({l1} and {l2})"
+            )?,
+            Error::DistanceKindMismatch(k1, k2) => {
+                write!(f, "Cannot compute distance between {k1} and {k2}")?;
+            }
         }
         Ok(())
     }
@@ -873,7 +889,6 @@ mod tests {
     }
 
     // ===== Hamming + Levenshtein Distance Tool Tests =============================================
-    // TODO
 
     #[test]
     fn hamming_dna() -> Result<(), Error> {
@@ -903,7 +918,7 @@ mod tests {
     fn hamming_different_alphabet() -> Result<(), Error> {
         let a = Seq::rna("ACGUGUACGUGUACGU")?;
         let b = Seq::rna_n("AGCUUNUCAUUCUNNC")?;
-        assert!(!a.hamming_distance(&b).is_err());
+        assert_eq!(a.hamming_distance(&b)?, 12);
         Ok(())
     }
 
@@ -922,7 +937,7 @@ mod tests {
     fn hamming_unequal_len() -> Result<(), Error> {
         let a = Seq::rna("ACGUGUACGUGUACGU")?;
         let b = Seq::rna("ACGUGUACGUGUACGUACG")?;
-        assert_eq!(a.hamming_distance(&b), Err(Error::HamDistance(16, 19)));
+        assert_eq!(a.hamming_distance(&b), Err(Error::HammingDistance(16, 19)));
         Ok(())
     }
 
@@ -954,7 +969,7 @@ mod tests {
     fn levenshtein_different_alphabet() -> Result<(), Error> {
         let a = Seq::rna("ACGUGUACGUGUACGU")?;
         let b = Seq::rna_n("AGCUUNUCAUUCUNNC")?;
-        assert!(!a.levenshtein_distance(&b).is_err());
+        assert_eq!(a.levenshtein_distance(&b)?, 11);
         Ok(())
     }
 
@@ -1563,7 +1578,7 @@ mod tests {
         let protein = Seq::protein("MAMAPRTEINSTRING")?;
         assert_eq!(
             protein.reverse_complement(),
-            Err(Error::RevComp(Kind::Protein))
+            Err(Error::ReverseComplement(Kind::Protein))
         );
         Ok(())
     }
@@ -1625,12 +1640,28 @@ mod tests {
             "The provided sequence was not valid Protein (Base), or Protein (IUPAC)"
         );
         assert_eq!(
-            &Error::RevComp(Kind::Protein).to_string(),
+            &Error::ReverseComplement(Kind::Protein).to_string(),
             "Cannot reverse complement Protein"
         );
         assert_eq!(
             &Error::GcContent(Kind::Protein).to_string(),
             "Cannot provide GC content for Protein"
+        );
+        assert_eq!(
+            &Error::HammingDistance(4, 9).to_string(),
+            "Cannot compute Hamming distance between sequences of different lengths (4 and 9)"
+        );
+        assert_eq!(
+            &Error::DistanceKindMismatch(Kind::Dna, Kind::Protein).to_string(),
+            "Cannot compute distance between DNA and Protein"
+        );
+        assert_eq!(
+            &Error::DistanceKindMismatch(Kind::Dna, Kind::Rna).to_string(),
+            "Cannot compute distance between DNA and RNA"
+        );
+        assert_eq!(
+            &Error::DistanceKindMismatch(Kind::Protein, Kind::Rna).to_string(),
+            "Cannot compute distance between Protein and RNA"
         );
     }
 }
