@@ -11,18 +11,13 @@
 
   $: seq = new Seq(input);
   $: output = seq.reverse_complement().to_string();
-  let selection = "";
-  document.addEventListener(`selectionchange`, () => {
-    selection = document.getSelection();
-  });
 </script>
 
 <main
-  class="flex portrait:flex-col landscape:flex-row justify-evenly items-center bg-surface-800 bg-repeat"
+  class="flex portrait:flex-col landscape:flex-row justify-evenly items-center bg-surface-200 dark:bg-surface-800 bg-repeat"
   style="background-image: url({Grid})"
 >
   <Input bind:value={input} />
   <Cell title="Pipeline" />
-  <!-- This should flash it's color when a new output is computed! -->
-  <Output bind:value={selection} />
+  <Output bind:value={output} />
 </main>

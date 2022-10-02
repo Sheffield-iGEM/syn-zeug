@@ -156,6 +156,8 @@
   };
 </script>
 
-<Header />
-<Main />
-<Footer />
+<div id="app" class="w-screen h-screen">
+  <Header />
+  <Main />
+  <Footer />
+</div>

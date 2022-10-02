@@ -1,1 +1,1 @@
-<footer class="col-span-2 h-16 bg-surface-900" />
+<footer class="h-16 !bg-surface-300 dark:!bg-surface-900" />

@@ -1,7 +1,16 @@
 <script lang="ts">
-  import Logo from "./assets/Logo.svg";
+  import { AppBar, LightSwitch } from "@brainandbones/skeleton";
+  import DarkLogo from "./assets/Dark Logo.svg";
+  import LightLogo from "./assets/Light Logo.svg";
 </script>
 
-<header class="col-span-2 h-16 bg-surface-900 shadow-2xl z-10">
-  <img class="h-full py-2 pl-4" src="{Logo}" alt="The SynZeug Logo">
-</header>
+<AppBar class="h-16 z-10 !shadow-2xl !bg-surface-300 dark:!bg-surface-900">
+  <svelte:fragment slot="lead">
+    <img class="h-16 py-2 pl-4 dark:hidden" src={LightLogo} alt="The SynZeug Logo" />
+    <img class="h-16 py-2 pl-4 hidden dark:block" src={DarkLogo} alt="The SynZeug Logo" />
+  </svelte:fragment>
+  (center)
+  <svelte:fragment slot="trail">
+    <LightSwitch class="mr-4" />
+  </svelte:fragment>
+</AppBar>

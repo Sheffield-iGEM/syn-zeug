@@ -1,18 +1,19 @@
 <script lang="ts">
-  import { Card } from "@brainandbones/skeleton";
-
   export let title: String;
 </script>
 
-<Card
-  class="shadow-lg portrait:w-4/5 landscape:w-1/4 portrait:h-1/4 landscape:h-4/6"
-  background="bg-surface-700"
-  color="text-surface-200"
+<div
+  class="card flex flex-col !ring-0 transition-shadow duration-200 dark:hover:shadow-[3px_4px_48px] dark:hover:shadow-accent-500/20 portrait:w-4/5 landscape:w-1/4 portrait:h-1/4 landscape:h-4/6 !bg-surface-300 dark:!bg-surface-700"
 >
-  <svelte:fragment slot="header">
+  <header class="card-header">
     <p class="font-plex-mono font-bold uppercase text-xl -mt-[1.9rem] ml-[2%]">
-      <span class="bg-surface-700 px-2 rounded-lg">{title}</span>
+      <span class="bg-surface-300 dark:!bg-surface-700 px-2 rounded-lg"
+        >{title}</span
+      >
     </p>
-  </svelte:fragment>
-  <slot />
-</Card>
+  </header>
+  <div class="card-body grow">
+    <slot />
+  </div>
+  <footer class="card-footer">(footer)</footer>
+</div>

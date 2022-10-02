@@ -1,11 +1,23 @@
 /* Write your global styles here, in PostCSS syntax */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-body {
+#app {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: min-content 1fr min-content;
+}
+
+body, p {
+    @apply !text-surface-900;
+    @apply dark:!text-surface-300;
+}
+
+.lightswitch-thumb .svg-icon {
+    @apply fill-surface-900;
+    @apply dark:fill-surface-300;
+}
+
+.lightswitch-thumb {
+    @apply bg-surface-300;
+    @apply dark:bg-surface-900;
 }
