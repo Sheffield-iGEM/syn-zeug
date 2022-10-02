@@ -1,3 +1,0 @@
-[submodule "rust-bio"]
-	path = rust-bio
-	url = git@github.com:TheLostLambda/rust-bio.git

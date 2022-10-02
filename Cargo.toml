@@ -1,7 +1,6 @@
 [workspace]
 members = [
   "biobox",
-  "rust-bio",
   "syn-zeug",
 ]
 

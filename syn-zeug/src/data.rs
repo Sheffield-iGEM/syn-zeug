@@ -42,6 +42,21 @@ pub static ALPHABET_MAP: Lazy<HashMap<(Kind, Alphabet), bio::alphabets::Alphabet
         ])
     });
 
+pub const IUPAC_GC_PROBS: Map<u8, f64> = phf_map! {
+    b'C' => 1.0,
+    b'G' => 1.0,
+    b'S' => 1.0,
+    b'K' => 1.0 / 2.0,
+    b'M' => 1.0 / 2.0,
+    b'R' => 1.0 / 2.0,
+    b'Y' => 1.0 / 2.0,
+    b'D' => 1.0 / 3.0,
+    b'H' => 1.0 / 3.0,
+    b'B' => 2.0 / 3.0,
+    b'V' => 2.0 / 3.0,
+    b'N' => 1.0 / 4.0,
+};
+
 pub const IUPAC_DNA: Map<u8, &[u8]> = phf_map! {
     b'R' => b"AG",
     b'Y' => b"CT",
