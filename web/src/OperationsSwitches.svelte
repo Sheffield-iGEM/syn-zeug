@@ -66,7 +66,9 @@
                   size="sm"
                   accent="bg-primary-500"
                 />
+
                 <Divider />
+
               </div>
             {/each}
           </svelte:fragment>
