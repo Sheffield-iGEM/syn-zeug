@@ -28,11 +28,14 @@
   };
 
   const displayPopup = () => {
-    console.log(dialogStore);
     dialogStore.trigger(d);
   };
 
-  let chainedFunctions = [];
+  const handlePowerBtnClicked = (input: string) => {
+    console.log(input)
+  }
+
+  $: chainedFunctions = ["This is a long name for", "th", "th", "th"];
 </script>
 
 <main
@@ -40,22 +43,23 @@
   style="background-image: url({Grid})"
 >
   <Input bind:value={input} />
-  <Cell title="Pipeline">
+  <Cell {chainedFunctions} title="Pipeline">
     <Dialog
       blur="backdrop-blur-sm"
       card="card h-full overflow-y-scroll md:overflow-hidden md:h-[620px]"
       duration={250}
     />
-    <div class="flex flex-col justify-center items-center w-full h-full">
-      {#if chainedFunctions.length > 0}
-        {#each chainedFunctions as chained}
-          <Function functionName={chained} />
-        {/each}
-      {:else}
-        <button class="btn" on:click={displayPopup}>
-          <div class="fa fa-plus" />
-        </button>
-      {/if}
+    <div
+      class={`flex flex-col ${
+        chainedFunctions.length < 1 ? "justify-center" : ""
+      } items-center w-full h-[300px]`}
+    >
+      {#each chainedFunctions as chained}
+        <Function functionName={chained}/>
+      {/each}
+      <button class="btn" on:click={displayPopup}>
+        <div class="fa fa-plus" />
+      </button>
     </div>
   </Cell>
   <Output bind:value={output} />

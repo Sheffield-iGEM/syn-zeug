@@ -1,5 +1,7 @@
 <script lang="ts">
   export let title: String;
+
+  export let chainedFunctions:Array<string> = [];
 </script>
 
 <div
@@ -12,7 +14,11 @@
       >
     </p>
   </header>
-  <div class="card-body grow">
+  <div
+    class={`card-body grow ${
+      chainedFunctions.length > 2 ? "overflow-y-scroll" : ""
+    }`}
+  >
     <slot />
   </div>
   <footer class="card-footer">(footer)</footer>
