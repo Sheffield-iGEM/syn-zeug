@@ -46,7 +46,7 @@
       card="card h-full overflow-y-scroll md:overflow-hidden md:h-[620px]"
       duration={250}
     />
-    <div class="flex flex-col justify-center items-center w-full h-full overflow-y-scroll">
+    <div class="flex flex-col justify-center items-center w-full h-full">
       {#if chainedFunctions.length > 0}
         {#each chainedFunctions as chained}
           <Function functionName={chained} />
