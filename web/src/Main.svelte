@@ -1,16 +1,18 @@
 <script lang="ts">
   import { Seq } from "biobox";
+  import { writable } from "svelte/store";
   import Grid from "./assets/Grid.svg";
-  import Cell from "./Main/Cell.svelte";
   import Input from "./Main/Input.svelte";
   import Output from "./Main/Output.svelte";
+  import Pipeline from "./Main/Pipeline.svelte";
 
   let input = "";
+  let pipeline = writable((s) => s.to_string());
   let output = "";
   let seq = new Seq("");
 
   $: seq = new Seq(input);
-  $: output = seq.reverse_complement().to_string();
+  $: output = $pipeline(seq);
 </script>
 
 <main
@@ -18,6 +20,6 @@
   style="background-image: url({Grid})"
 >
   <Input bind:value={input} />
-  <Cell title="Pipeline" />
+  <Pipeline bind:value={pipeline} />
   <Output bind:value={output} />
 </main>

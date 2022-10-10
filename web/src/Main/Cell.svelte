@@ -12,7 +12,7 @@
       >
     </p>
   </header>
-  <div class="card-body grow">
+  <div class="card-body grow overflow-y-auto">
     <slot />
   </div>
   <footer class="card-footer">(footer)</footer>

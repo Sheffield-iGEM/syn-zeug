@@ -7,6 +7,8 @@ specifiers:
   autoprefixer: ^10.4.12
   postcss: ^8.4.17
   postcss-load-config: ^4.0.1
+  prettier: ^2.7.1
+  prettier-plugin-svelte: ^2.8.0
   svelte: ^3.50.1
   svelte-check: ^2.9.1
   svelte-preprocess: ^4.10.7
@@ -23,6 +25,8 @@ devDependencies:
   autoprefixer: 10.4.12_postcss@8.4.17
   postcss: 8.4.17
   postcss-load-config: 4.0.1_postcss@8.4.17
+  prettier: 2.7.1
+  prettier-plugin-svelte: 2.8.0_nk6d2fkgcllkkdynqbuearcure
   svelte: 3.50.1
   svelte-check: 2.9.1_ejhwqstqdwfnekvhsm3hus3z4i
   svelte-preprocess: 4.10.7_or4gyn62tntw7ihg73nagmkdja
@@ -931,6 +935,22 @@ packages:
       nanoid: 3.3.4
       picocolors: 1.0.0
       source-map-js: 1.0.2
+    dev: true
+
+  /prettier-plugin-svelte/2.8.0_nk6d2fkgcllkkdynqbuearcure:
+    resolution: {integrity: sha512-QlXv/U3bUszks3XYDPsk1fsaQC+fo2lshwKbcbO+lrSVdJ+40mB1BfL8OCAk1W9y4pJxpqO/4gqm6NtF3zNGCw==}
+    peerDependencies:
+      prettier: ^1.16.4 || ^2.0.0
+      svelte: ^3.2.0
+    dependencies:
+      prettier: 2.7.1
+      svelte: 3.50.1
+    dev: true
+
+  /prettier/2.7.1:
+    resolution: {integrity: sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
     dev: true
 
   /queue-microtask/1.2.3:
