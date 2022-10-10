@@ -1,8 +1,8 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@brainandbones/skeleton': ^0.50.6
-  '@sveltejs/vite-plugin-svelte': ^1.0.9
+  '@brainandbones/skeleton': ^0.41.49
+  '@sveltejs/vite-plugin-svelte': ^1.0.8
   '@tsconfig/svelte': ^3.0.0
   autoprefixer: ^10.4.12
   postcss: ^8.4.17
@@ -13,12 +13,12 @@ specifiers:
   tailwindcss: ^3.1.8
   tslib: ^2.4.0
   typescript: ^4.8.4
-  vite: ^3.1.7
+  vite: ^3.1.4
   vite-plugin-wasm-pack: ^0.1.12
 
 devDependencies:
-  '@brainandbones/skeleton': 0.50.6
-  '@sveltejs/vite-plugin-svelte': 1.0.9_svelte@3.50.1+vite@3.1.7
+  '@brainandbones/skeleton': 0.41.49
+  '@sveltejs/vite-plugin-svelte': 1.0.8_svelte@3.50.1+vite@3.1.4
   '@tsconfig/svelte': 3.0.0
   autoprefixer: 10.4.12_postcss@8.4.17
   postcss: 8.4.17
@@ -29,13 +29,13 @@ devDependencies:
   tailwindcss: 3.1.8_postcss@8.4.17
   tslib: 2.4.0
   typescript: 4.8.4
-  vite: 3.1.7
+  vite: 3.1.4
   vite-plugin-wasm-pack: 0.1.12
 
 packages:
 
-  /@brainandbones/skeleton/0.50.6:
-    resolution: {integrity: sha512-xhZKP4oAxstRQw5+cB4Bqh8ajy5LxtWtstLgQ2BMYQlSBM///qihSmn6F/8FG6HmHYF7OsH3ca63fGrvzaU6uw==}
+  /@brainandbones/skeleton/0.41.49:
+    resolution: {integrity: sha512-1TtdgxFyQk3K4Rz9AjuMNILqnsh4vT0MFrEaT2+JWbWDIwsig0wKQCXUyGdE4cRWxuVd+HgJA4+qZ7dYGH2e0w==}
     dev: true
 
   /@esbuild/android-arm/0.15.10:
@@ -101,8 +101,8 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@sveltejs/vite-plugin-svelte/1.0.9_svelte@3.50.1+vite@3.1.7:
-    resolution: {integrity: sha512-+SDrAnT7TDi8sdj4OfD2SC4s9DNrpNVBrue8fT2PmKks9Ddu0JIfSeX91wXZb/1xHz4EkGb+rli8GTRI0yGOjg==}
+  /@sveltejs/vite-plugin-svelte/1.0.8_svelte@3.50.1+vite@3.1.4:
+    resolution: {integrity: sha512-1xkVTB4pm6zuign858FzVYE9Fdw9MQBOlxrdd85STV0NvTDmcofcRpcrK+zcIyT8SZ2dseHLu8hvDwzssF6RfA==}
     engines: {node: ^14.18.0 || >= 16}
     peerDependencies:
       diff-match-patch: ^1.0.5
@@ -116,10 +116,10 @@ packages:
       debug: 4.3.4
       deepmerge: 4.2.2
       kleur: 4.1.5
-      magic-string: 0.26.7
+      magic-string: 0.26.5
       svelte: 3.50.1
       svelte-hmr: 0.15.0_svelte@3.50.1
-      vite: 3.1.7
+      vite: 3.1.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -730,8 +730,8 @@ packages:
       sourcemap-codec: 1.4.8
     dev: true
 
-  /magic-string/0.26.7:
-    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
+  /magic-string/0.26.5:
+    resolution: {integrity: sha512-yXUIYOOQnEHKHOftp5shMWpB9ImfgfDJpapa38j/qMtTj5QHWucvxP4lUtuRmHT9vAzvtpHkWKXW9xBwimXeNg==}
     engines: {node: '>=12'}
     dependencies:
       sourcemap-codec: 1.4.8
@@ -1222,8 +1222,8 @@ packages:
       narrowing: 1.5.0
     dev: true
 
-  /vite/3.1.7:
-    resolution: {integrity: sha512-5vCAmU4S8lyVdFCInu9M54f/g8qbOMakVw5xJ4pjoaDy5wgy9sLLZkGdSLN52dlsBqh0tBqxjaqqa8LgPqwRAA==}
+  /vite/3.1.4:
+    resolution: {integrity: sha512-JoQI08aBjY9lycL7jcEq4p9o1xUjq5aRvdH4KWaXtkSx7e7RpAh9D3IjzDWRD4Fg44LS3oDAIOG/Kq1L+82psA==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
