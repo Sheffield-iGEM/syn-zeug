@@ -15,5 +15,7 @@
   <div class="card-body grow overflow-y-auto">
     <slot />
   </div>
-  <footer class="card-footer">(footer)</footer>
+  <footer class="card-footer">
+    <slot name="footer" />
+  </footer>
 </div>

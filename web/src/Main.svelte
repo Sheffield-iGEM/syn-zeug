@@ -6,13 +6,15 @@
   import Output from "./Main/Output.svelte";
   import Pipeline from "./Main/Pipeline.svelte";
 
-  let input = "";
+  let input = new Seq("");
   let pipeline = writable((s) => s.to_string());
   let output = "";
-  let seq = new Seq("");
 
-  $: seq = new Seq(input);
-  $: output = $pipeline(seq);
+  $: try {
+    output = $pipeline(input);
+  } catch (e) {
+    output = e;
+  }
 </script>
 
 <main

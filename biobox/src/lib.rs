@@ -100,12 +100,6 @@ impl Seq {
         wrap_res!(self.0.convert(kind))
     }
 
-    // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
-    pub fn count_elements(&self) -> Result<JsValue, String> {
-        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|_, &x| x != 0);
-        serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
-    }
-
     pub fn find_orfs(&self, min_len: usize) -> Result<Vec<JsValue>, String> {
         self.0
             .find_orfs(min_len)
@@ -117,6 +111,16 @@ impl Seq {
                     })
                     .collect()
             })
+    }
+
+    pub fn gc_content(&self) -> Result<f64, String> {
+        self.0.gc_content().map_err(|e| e.to_string())
+    }
+
+    // TODO: Should I swap out the String for serde_wasm_bindgen::Error?
+    pub fn count_elements(&self) -> Result<JsValue, String> {
+        let map: HashMap<char, _> = self.0.count_elements().to_hashmap(|_, &x| x != 0);
+        serde_wasm_bindgen::to_value(&map).map_err(|e| e.to_string())
     }
 
     #[allow(clippy::inherent_to_string)]

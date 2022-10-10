@@ -263,6 +263,8 @@ impl Seq {
             .collect())
     }
 
+    // ===== Terminal Tools ========================================================================
+
     pub fn gc_content(&self) -> Result<f64, Error> {
         if self.kind == Kind::Protein {
             return Err(Error::GcContent(self.kind));
@@ -288,6 +290,16 @@ impl Seq {
                     .sum::<f64>()
             }
         } / self.len() as f64)
+    }
+
+    // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
+    // the equivalent (and more canonical) code written using `HashMap` and the `Entry` API
+    pub fn count_elements(&self) -> ByteMap<usize> {
+        let mut counts = ByteMap::default();
+        for &b in &self.bytes {
+            counts[b] += 1;
+        }
+        counts
     }
 
     pub fn hamming_distance(&self, other: &Self) -> Result<usize, Error> {
@@ -323,18 +335,6 @@ impl Seq {
             &self.normalize_case(Case::Upper).bytes,
             &other.normalize_case(Case::Upper).bytes,
         ) as usize)
-    }
-
-    // ===== Terminal Tools ========================================================================
-
-    // OPTIMISATION: This code indexing a sparse ByteMap to keep counts is 14.3 times faster than
-    // the equivalent (and more canonical) code written using `HashMap` and the `Entry` API
-    pub fn count_elements(&self) -> ByteMap<usize> {
-        let mut counts = ByteMap::default();
-        for &b in &self.bytes {
-            counts[b] += 1;
-        }
-        counts
     }
 }
 
