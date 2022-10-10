@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Seq } from "biobox";
   export let value;
 
   let gc = 0;
@@ -11,10 +12,7 @@
 </script>
 
 <div class="flex gap-3 font-plex-mono">
-  <span
-    ><strong>Type:</strong>
-    <span>{value.kind()} ({value.alphabet()})</span></span
-  >
-  <span><strong>Length:</strong> {value.len()}bp </span>
-  <span><strong>GC:</strong> {gc}%</span>
+  <span><strong>Type: </strong>{value.kind()} ({value.alphabet()})</span>
+  <span><strong>Length: </strong>{value.len()}bp</span>
+  <span><strong>GC: </strong>{gc}%</span>
 </div>

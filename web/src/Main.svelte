@@ -6,12 +6,22 @@
   import Output from "./Main/Output.svelte";
   import Pipeline from "./Main/Pipeline.svelte";
 
-  let input = new Seq("");
+  let input = "";
   let pipeline = writable((s) => s.to_string());
   let output = "";
 
+  let swap = () => (input = output);
+  let copy = () => navigator.clipboard.writeText(output);
+
+  let seq = new Seq("");
   $: try {
-    output = $pipeline(input);
+    seq = new Seq(input);
+  } catch (e) {
+    output = e;
+  }
+
+  $: try {
+    output = $pipeline(seq);
   } catch (e) {
     output = e;
   }
@@ -21,7 +31,7 @@
   class="flex portrait:flex-col landscape:flex-row justify-evenly items-center bg-surface-200 dark:bg-surface-800 bg-repeat"
   style="background-image: url({Grid})"
 >
-  <Input bind:value={input} />
+  <Input bind:value={input} bind:seq />
   <Pipeline bind:value={pipeline} />
-  <Output bind:value={output} />
+  <Output bind:value={output} on:swap={swap} on:copy={copy} />
 </main>

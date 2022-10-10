@@ -1,5 +1,6 @@
 <script lang="ts">
   import Cell from "./Cell.svelte";
+  import OutputActions from "./OutputActions.svelte";
 
   export let value: String;
 </script>
@@ -12,4 +13,7 @@
       bind:value
     />
   </div>
+  <svelte:fragment slot="footer">
+    <OutputActions on:swap on:copy />
+  </svelte:fragment>
 </Cell>

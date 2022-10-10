@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   "@brainandbones/skeleton": ^0.41.49
+  "@fortawesome/free-solid-svg-icons": ^6.2.0
   "@sveltejs/vite-plugin-svelte": ^1.0.8
   "@tsconfig/svelte": ^3.0.0
   autoprefixer: ^10.4.12
@@ -11,12 +12,17 @@ specifiers:
   prettier-plugin-svelte: ^2.8.0
   svelte: ^3.50.1
   svelte-check: ^2.9.1
+  svelte-fa: ^3.0.3
   svelte-preprocess: ^4.10.7
   tailwindcss: ^3.1.8
   tslib: ^2.4.0
   typescript: ^4.8.4
   vite: ^3.1.4
   vite-plugin-wasm-pack: ^0.1.12
+
+dependencies:
+  "@fortawesome/free-solid-svg-icons": 6.2.0
+  svelte-fa: 3.0.3
 
 devDependencies:
   "@brainandbones/skeleton": 0.41.49
@@ -67,6 +73,26 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@fortawesome/fontawesome-common-types/6.2.0:
+    resolution:
+      {
+        integrity: sha512-rBevIsj2nclStJ7AxTdfsa3ovHb1H+qApwrxcTVo+NNdeJiB9V75hsKfrkG5AwNcRUNxrPPiScGYCNmLMoh8pg==,
+      }
+    engines: { node: ">=6" }
+    requiresBuild: true
+    dev: false
+
+  /@fortawesome/free-solid-svg-icons/6.2.0:
+    resolution:
+      {
+        integrity: sha512-UjCILHIQ4I8cN46EiQn0CZL/h8AwCGgR//1c4R96Q5viSRwuKVo0NdQEc4bm+69ZwC0dUvjbDqAHF1RR5FA3XA==,
+      }
+    engines: { node: ">=6" }
+    requiresBuild: true
+    dependencies:
+      "@fortawesome/fontawesome-common-types": 6.2.0
+    dev: false
 
   /@jridgewell/resolve-uri/3.1.0:
     resolution:
@@ -1533,6 +1559,13 @@ packages:
       - stylus
       - sugarss
     dev: true
+
+  /svelte-fa/3.0.3:
+    resolution:
+      {
+        integrity: sha512-GIikJjcVCD+5Y/x9hZc2R4gvuA0gVftacuWu1a+zVQWSFjFYZ+hhU825x+QNs2slsppfrgmFiUyU9Sz9gj4Rdw==,
+      }
+    dev: false
 
   /svelte-hmr/0.15.0_svelte@3.50.1:
     resolution:
