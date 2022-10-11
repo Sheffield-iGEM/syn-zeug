@@ -6,6 +6,8 @@ A modern toolbox for synthetic biology
 
 Though you could download the code and build SZ yourself, there is a pre-built and automatically updated version of the web UI available at <https://sheffield-igem.github.io/syn-zeug/>.
 
+For a live demonstration of SZ toolbox and a showcase of its capabilities, we've made [a short walkthrough video](https://youtu.be/vFJ4Za0eWUg).
+
 ## Where Is Everything?
 
 - `syn-zeug` is the core Rust library where biotools are implemented
