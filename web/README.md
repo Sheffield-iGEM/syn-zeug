@@ -1,6 +1,6 @@
 ## A Bleeding Edge Web Stack
 
-The core of this web app is [TypeScript](https://www.typescriptlang.org/) enhanced [Svelte](https://svelte.dev/), with the computational heavy-lifting done by [Rust](https://www.rust-lang.org/) code compiled to [WebAssembly](https://webassembly.org/) via [`wasm-pack`](https://rustwasm.github.io/wasm-pack/). Gluing all of this together is the [Vite](https://vitejs.dev/) module bundler and the [`pnpm`](https://pnpm.io/) package manager.
+The core of this web app is [TypeScript](https://www.typescriptlang.org/) enhanced [Svelte](https://svelte.dev/) using the [Skeleton](https://skeleton.brainandbonesllc.com/) UI toolkit, with the computational heavy-lifting done by [Rust](https://www.rust-lang.org/) code compiled to [WebAssembly](https://webassembly.org/) via [`wasm-pack`](https://rustwasm.github.io/wasm-pack/). Gluing all of this together is the [Vite](https://vitejs.dev/) module bundler and the [`pnpm`](https://pnpm.io/) package manager.
 
 ## Developing
 
