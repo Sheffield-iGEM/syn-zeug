@@ -9,6 +9,7 @@
   let input = "";
   let pipeline = writable((s) => s.to_string());
   let output = "";
+  let error = false;
 
   let swap = () => (input = output);
   let copy = () => navigator.clipboard.writeText(output);
@@ -16,12 +17,16 @@
   let seq = new Seq("");
   $: try {
     seq = new Seq(input);
+    error = false;
   } catch (e) {
     output = e;
+    error = true;
   }
 
   $: try {
-    output = $pipeline(seq);
+    if (!error) {
+      output = $pipeline(seq);
+    }
   } catch (e) {
     output = e;
   }
