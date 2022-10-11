@@ -35,3 +35,9 @@ Though you could download the code and build SZ yourself, there is a pre-built a
 - Extract Subsequences
 - Hamming Distance
 - Levenshtein Distance
+
+## Contributing
+
+The contribution or brainstorming of new tools, UI improvements, or documentation is more than welcome.
+If you'd like to implement any of the above yourself, please feel free to create a fork of our [main development repository](https://github.com/Sheffield-iGEM/syn-zeug) and submit a PR.
+The code in this project, particularly in the Rust library, is held to a high standard, but reviewers are more than happy to provide instruction and guidance to new contributors!
