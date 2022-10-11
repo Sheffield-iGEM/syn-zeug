@@ -1,5 +1,6 @@
 <script>
   import Fa from "svelte-fa";
+  import { tooltip } from "@brainandbones/skeleton";
   import { faReplyAll, faCopy } from "@fortawesome/free-solid-svg-icons";
   import { createEventDispatcher } from "svelte";
 
@@ -10,7 +11,7 @@
   <button on:click={() => dispatch("copy")}>
     <Fa icon={faCopy} />
   </button>
-  <button on:click={() => dispatch("swap")}>
+  <button use:tooltip={{ content: 'Skeleton', background: '!bg-error-500' }} on:click={() => dispatch("swap")}>
     <Fa icon={faReplyAll} />
   </button>
 </div>
