@@ -1,5 +1,6 @@
 ## Code Checks
-``` bash
+
+```bash
 # Basic checks
 cargo test && cargo fmt && cargo clippy
 # Test coverage

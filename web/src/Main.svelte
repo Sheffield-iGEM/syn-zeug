@@ -17,7 +17,7 @@
   let seq = new Seq("");
   $: try {
     // FIXME: Move whitespace handling to the Rust side of things!
-    seq = new Seq(input.replace(/\s/g, ''));
+    seq = new Seq(input.replace(/\s/g, ""));
     error = false;
   } catch (e) {
     output = e;

@@ -3,8 +3,7 @@ name: New Tool
 about: Describe a tool to be implemented
 title: 'Implement New Tool: "INSERT TOOL NAME HERE"'
 labels: enhancement, tool
-assignees: ''
-
+assignees: ""
 ---
 
 **What should this tool do?**
