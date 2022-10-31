@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 bio = { git = "https://github.com/TheLostLambda/rust-bio/", branch = "main" }
 syn-zeug = { path = "../syn-zeug" }
-getrandom = { version = "0.2.7", features = ["js"] }
+getrandom = { version = "0.2.8", features = ["js"] }
 wasm-bindgen = "0.2.83"
 serde-wasm-bindgen = "0.4.5"
-serde = "1.0.145"
+serde = "1.0.147"
