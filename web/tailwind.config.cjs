@@ -2,7 +2,7 @@ module.exports = {
   darkMode: "class",
   content: [
     "./src/**/*.{html,js,svelte,ts}",
-    "./node_modules/@brainandbones/skeleton/**/*.{html,js,svelte,ts}",
+    "./node_modules/@skeletonlabs/skeleton/**/*.{html,js,svelte,ts}",
   ],
 
   theme: {
@@ -14,5 +14,5 @@ module.exports = {
     },
   },
 
-  plugins: [require("@brainandbones/skeleton/tailwind/theme.cjs")],
+  plugins: [require("@skeletonlabs/skeleton/tailwind/theme.cjs")],
 };

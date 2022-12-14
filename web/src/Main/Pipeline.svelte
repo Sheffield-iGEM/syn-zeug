@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ListBox, ListBoxItem } from "@brainandbones/skeleton";
+  import { ListBox, ListBoxItem } from "@skeletonlabs/skeleton";
   import { writable } from "svelte/store";
   import Cell from "./Cell.svelte";
   import CountElements from "./Tools/CountElements.svelte";

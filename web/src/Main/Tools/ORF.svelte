@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Seq } from "biobox";
-  import { ListBoxItem } from "@brainandbones/skeleton";
+  import { ListBoxItem } from "@skeletonlabs/skeleton";
 
   let tool = (s) =>
     s

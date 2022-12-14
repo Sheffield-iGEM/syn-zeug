@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppBar, LightSwitch } from "@brainandbones/skeleton";
+  import { AppBar, LightSwitch } from "@skeletonlabs/skeleton";
   import DarkLogo from "./assets/Dark Logo.svg";
   import LightLogo from "./assets/Light Logo.svg";
 </script>

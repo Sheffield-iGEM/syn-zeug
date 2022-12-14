@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ListBoxItem } from "@brainandbones/skeleton";
+  import { ListBoxItem } from "@skeletonlabs/skeleton";
 
   let tool = (s) => s.reverse_complement().to_string();
 </script>

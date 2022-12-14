@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ListBoxItem } from "@brainandbones/skeleton";
+  import { ListBoxItem } from "@skeletonlabs/skeleton";
 
   let tool = (s) => s.convert("Rna").to_string();
 </script>
